@@ -79,7 +79,7 @@ class Mouth {
     // Headset과 같은 모양(둥근 사각형 아래쪽만 라운드)
     push();
     noStroke();
-    fill(0);
+    fill(this.parent.bl);
     rectMode(CORNERS);
 
     const halfW = this.w;

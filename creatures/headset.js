@@ -148,12 +148,12 @@ class Headset extends Creature {
     }
 
     // 눈 (좌/우)
-    fill(0);
+    fill(this.bl);
     ellipse(eyeCxL, eyeCy, eyeW, eyeH);
     fill(this.currentColor);
     ellipse(eyeCxL, eyeCy - r * 0.07, irisW, irisH);
 
-    fill(0);
+    fill(this.bl);
     ellipse(eyeCxR, eyeCy, eyeW, eyeH);
     fill(this.currentColor);
     ellipse(eyeCxR, eyeCy - r * 0.07, irisW, irisH);

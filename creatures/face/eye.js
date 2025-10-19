@@ -58,7 +58,7 @@ class Eye {
 
   show() {
     noStroke();
-    fill(0);
+    fill(this.parent.bl);
     ellipseMode(CENTER);
     ellipse(this.x, this.y, this.w, this.h);
 

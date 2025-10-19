@@ -35,11 +35,13 @@ class Creature {
     this.baseC2 = color(pal.c2 || '#ffffff');        // 기준색 2
     this.baseC3 = color(pal.c3 || '#ffffff');        // 기준색 3
     this.baseC4 = color(pal.c4 || '#ffffff');        // 기준색 4
+    this.black = color('#000000');
     // 화면에 쓸 가변색(초기값은 기준색과 동일)
     this.currentColor = this.baseC1;
     this.c2 = this.baseC2;
     this.c3 = this.baseC3;
     this.c4 = this.baseC4;
+    this.bl = this.black;
     this.isColored = false;         // 색이 변했는지
     this.touchedFood = false;       // 먹이와 닿았는지
 
@@ -640,6 +642,7 @@ class Creature {
     this.c2 = lerpColor(this.baseC2, backgroundColor, amt);
     this.c3 = lerpColor(this.baseC3, backgroundColor, amt);
     this.c4 = lerpColor(this.baseC4, backgroundColor, amt);
+    this.bl = lerpColor(this.black, backgroundColor, amt);
   }
 
   // 죽음
