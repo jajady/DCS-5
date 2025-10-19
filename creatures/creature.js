@@ -534,7 +534,7 @@ class Creature {
 
     // 흐름장 드리프트는 stage 4에서만
     if (typeof stage !== 'undefined' && stage === 4 && flowfield?.lookup) {
-      const drift = flowfield.lookup(this.position).mult(this.initMaxSpeed * 0.3);
+      const drift = flowfield.lookup(this.position).mult(this.initMaxSpeed * 1.0);
       this.position.add(drift);
     }
 
