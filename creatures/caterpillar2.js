@@ -16,6 +16,9 @@ class Caterpillar2 extends Creature {
     // Eye(parent, offsetX, offsetY, widthMult, heightMult)
     this.leftEye = new Eye(this, -0.35, -0.2, 0.15, 0.3);    // 눈
     this.rightEye = new Eye(this, 0.35, -0.2, 0.15, 0.3);
+
+    // Mouth(parent, offsetX, offsetY, widthMult, heightMult)
+    this.mouth = new Mouth(this, 0, 0.2, 0.15, 0.1);
   }
 
   update() {
@@ -43,6 +46,7 @@ class Caterpillar2 extends Creature {
         }
       }
     }
+    this.mouth.update();
   }
 
   // ✅ Creature.checkPetting()이 매 프레임 이걸 호출함
@@ -77,6 +81,8 @@ class Caterpillar2 extends Creature {
     this.leftEye.show();
     this.rightEye.show();
 
+    // 입
+    this.mouth.show();
   }
 
   init() {    // 몸통 원 위치 저장 배열 생성
