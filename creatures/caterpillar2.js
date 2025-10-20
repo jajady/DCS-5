@@ -19,6 +19,20 @@ class Caterpillar2 extends Creature {
 
     // Mouth(parent, offsetX, offsetY, widthMult, heightMult)
     this.mouth = new Mouth(this, 0, 0.2, 0.15, 0.1);
+
+    // 더듬이 상태 (0=없음, 1=완전 성장)
+    this.antAmount = 0;        // 현재 값
+    this.antTarget = 0;        // 목표 값
+    this.antSpeed = 0.06;     // 성장/축소 속도
+    this.antLenMul = 0.8;  //  길이
+    this.antSpreadMul = 0.2;  // 좌우 간격
+    this.antBulgeMul = 0.28;  // 곡률
+    this.antTipMul = 0.12;  // 끝 구슬 크기
+
+    // 표시 플래그 (기본은 꺼둠)
+    this.showFur = false;      // 털
+    this.showStripes = false;  // 줄무늬
+    this.showFeet = false;     // 발
   }
 
   update() {
@@ -47,6 +61,8 @@ class Caterpillar2 extends Creature {
       }
     }
     this.mouth.update();
+    // ★ 더듬이 양 보간
+    this.antAmount = lerp(this.antAmount, this.antTarget, this.antSpeed);
   }
 
   // ✅ Creature.checkPetting()이 매 프레임 이걸 호출함
@@ -55,10 +71,21 @@ class Caterpillar2 extends Creature {
     this.rightEye.update(isTouching);
   }
 
+  // ★ 진화 훅: 2단계가 되면 더듬이 타겟을 1로
+  onEvolve(step) {
+    // 단계별 켜기/끄기
+    this.antTarget = (step >= 2) ? 1 : 0;   // 더듬이(서서히 자람)
+    this.showFur = (step >= 3);
+    this.showStripes = (step >= 4);
+    this.showFeet = (step >= 5);
+  }
+
   show() {
     // 1) 버프 스케일
     const s = this.getVisualScale();
     const r = this.r * s;
+    const x = this.position.x;
+    const y = this.position.y;
 
     // === 지속 후광 ===
     if (this.isHalo) {
@@ -66,7 +93,7 @@ class Caterpillar2 extends Creature {
       const pulse = 0.6 + 0.4 * sin(frameCount * 0.05); // 살짝 숨쉬듯 펄스
       const alpha = 90 + 60 * pulse; // 알파값 변화
       fill(209, 255, 176, alpha);    // 연초록 빛 후광
-      ellipse(this.position.x, this.position.y, r * 1.8, r * 1.8);
+      ellipse(x, y, r * 1.8, r * 1.8);
     }
 
     // === 힐 연결선: 머리에서 시작 ===
@@ -77,7 +104,6 @@ class Caterpillar2 extends Creature {
       const pulse = 0.5 + 0.5 * sin(frameCount * 0.3);
       const alpha = 180 * pulse;
 
-      push();
       stroke(red(this.c2), green(this.c2), blue(this.c2), alpha);
       strokeWeight(max(1, this.r * 0.12));
       line(a.x, a.y, b.x, b.y);
@@ -90,31 +116,108 @@ class Caterpillar2 extends Creature {
       noStroke();
       fill(this.c3);
       circle(px, py, this.r * 0.35);
-      pop();
     }
 
-    // 본체 그리기
-    noStroke();
+    // ───────── 1) 몸통(꼬리→머리 바로 앞까지) ─────────
+    const baseColor = backgroundColor;       // 뒤쪽 색
+    const headColor = this.currentColor;     // 머리 쪽 색
     ellipseMode(CENTER);
-    // 가장 뒤쪽(꼬리) 색은 검정으로 시작하고,
-    // 가장 앞쪽(머리)은 currentColor 그대로
-    const baseColor = backgroundColor;   // 뒤쪽(가장 어두운 색)
-    const headColor = this.currentColor;  // 앞쪽(가장 밝은 색)
+    noStroke();
 
-    for (let i = this.circles.length - 1; i >= 0; i--) {
-      // i가 작을수록(머리 쪽) 밝고, 클수록(꼬리 쪽) 어둡게
+    // 머리는 index 0 이므로 1..len-1만 몸통으로 그림
+    for (let i = this.circles.length - 1; i >= 1; i--) {
       const amt = map(i, this.circles.length - 1, 0, 0, 1);
       const bodyColor = lerpColor(baseColor, headColor, amt);
-
       fill(bodyColor);
-      ellipse(this.circles[i].x, this.circles[i].y, r, r);
+
+      // 털
+      if (this.showFur) {
+        push();
+        translate(this.circles[i].x, this.circles[i].y);
+        rotate(PI * 1 / 2);
+        rotate(PI * -1 / 16);
+        fill(this.c2);
+        rectMode(CORNERS);
+        rect(0, 0, -this.r * s * 0.7, -this.r * s * 0.1, 5);
+        rotate(PI * 1 / 8);
+        rect(0, 0, -this.r * s * 0.7, -this.r * s * 0.1, 5);
+        pop();
+      }
+
+      // ★ 발: 진화 3단계에서
+      if (this.showFeet) {
+        push();
+        translate(this.circles[i].x, this.circles[i].y);
+        fill(this.c2);
+        ellipse(0, this.r * s * 0.5, this.r * s * 0.25, this.r * s * 0.4);
+        pop();
+      }
+
+      ellipse(this.circles[i].x, this.circles[i].y, r, r);  // 몸통
+
+      // 줄무늬
+      if (this.showStripes) {
+        push();
+        translate(this.circles[i].x, this.circles[i].y);
+        stroke(this.c3);
+        strokeWeight(0.1 * s);
+        noFill();
+        rectMode(CENTER);
+        ellipse(0, 0, r, r);    // 세로 줄
+
+        fill(this.c4);
+        rotate(PI * 2 / 6);       // 점
+        circle(0, this.r * -0.4 * s, this.r * s * 0.1 * s);
+        rotate(PI * 2 / 6);
+        circle(0, this.r * -0.4 * s, this.r * s * 0.1 * s);
+        rotate(PI * 4 / 6);
+        circle(0, this.r * -0.4 * s, this.r * s * 0.1 * s);
+        rotate(PI * 2 / 6);
+        circle(0, this.r * -0.4 * s, this.r * s * 0.1 * s);
+        pop();
+      }
     }
 
-    // 눈 그리기
+    // ───────── 2) 더듬이(얼굴 그리기 직전) ─────────
+    if (this.antAmount > 0.01) {
+      const grow = pow(this.antAmount, 0.85);
+      const len = this.r * (this.antLenMul * grow * s);
+      const spread = this.r * this.antSpreadMul;
+      const bulge = this.r * this.antBulgeMul;
+
+      stroke(this.currentColor);
+      strokeWeight(max(1, this.r * 0.04 * s));
+      noFill();
+
+      // 왼쪽
+      beginShape();
+      vertex(x - spread, y - this.r * 0.15);
+      quadraticVertex(x - spread - bulge * 0.3, y - bulge * 0.5,
+        x - spread - bulge * 0.15, y - len);
+      endShape();
+
+      // 오른쪽
+      beginShape();
+      vertex(x + spread, y - this.r * 0.15);
+      quadraticVertex(x + spread + bulge * 0.3, y - bulge * 0.5,
+        x + spread + bulge * 0.15, y - len);
+      endShape();
+
+      // 끝 구슬
+      noStroke();
+      fill(this.currentColor);
+      const tipD = this.r * this.antTipMul;
+      circle(x - spread - bulge * 0.15, y - len, tipD);
+      circle(x + spread + bulge * 0.15, y - len, tipD);
+    }
+
+    // ───────── 3) 얼굴(= circles[0]) ─────────
+    fill(this.currentColor);
+    ellipse(this.circles[0].x, this.circles[0].y, r, r);
+
+    // ───────── 4) 눈/입 ─────────
     this.leftEye.show();
     this.rightEye.show();
-
-    // 입
     this.mouth.show();
   }
 

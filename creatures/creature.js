@@ -284,7 +284,6 @@ class Creature {
 
             // 서브클래스 훅 호출 (예: Caterpillar가 더듬이/털/줄무늬/발 표시 전환)
             if (typeof this.onEvolve === 'function') {
-              console.log(this.evolutionStep);
               this.onEvolve(this.evolutionStep);
             }
           }

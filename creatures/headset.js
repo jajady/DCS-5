@@ -62,8 +62,8 @@ class Headset extends Creature {
       const a = this.position;
       const b = this._healTarget.position;
 
-      const pulse = 0.5 + 0.5 * sin(frameCount * 0.3);
-      const alpha = 180 * pulse;
+      const pulse = 0.5 + 0.5 * sin(frameCount * 0.1);
+      const alpha = 50 * pulse;
 
       push();
       stroke(red(this.c2), green(this.c2), blue(this.c2), alpha);
