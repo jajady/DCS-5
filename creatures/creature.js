@@ -358,8 +358,18 @@ class Creature {
   updateHaloHeal(all) {
     const now = millis();
 
-    // 0) isHalo 아니면 아무 것도 안 함
-    if (!this.isHalo) return;
+    // 0) 스테이지/후광/체력 조건 확인
+    const inStage3 = (typeof stage !== 'undefined' && stage === 3);
+    if (!this.isHalo || !inStage3) return;
+
+    // donor는 최소 1/3 이상 남아 있어야 함
+    const donorFloor = this.initHealth / 3;
+    const donorReady = this.health >= donorFloor;
+    if (!donorReady) {
+      // 이미 주고 있었다면 즉시 중단
+      if (this._healTarget) this._endHeal(true);
+      return;
+    }
 
     // 1) 힐 진행 중인 경우: 체력 이동
     if (this._healTarget) {
@@ -382,7 +392,9 @@ class Creature {
 
       // 수혜자 필요치(최대 체력까지)와 기부자 남길 최소치 고려
       const tgtNeed = max(0, tgt.initHealth - tgt.health);
-      const donorAvail = max(0, this.health - this.healMinDonorKeep);
+      // ▶ 1/3 바닥선과 기존 최소 유지치 중 더 높은 쪽을 바닥으로
+      const keepAbove = max(donorFloor, this.healMinDonorKeep);
+      const donorAvail = max(0, this.health - keepAbove);
 
       amount = min(amount, tgtNeed, donorAvail);
 
@@ -391,8 +403,8 @@ class Creature {
         tgt.health += amount;
       }
 
-      // 시간 종료 or 더 줄 게 없거나 더 받을 필요가 없으면 끝
-      if (now >= this._healEndMs || amount <= 0.0001) {
+      // 시간이 끝났거나, 줄 게 없거나, 바닥선 아래로 떨어지면 종료
+      if (now >= this._healEndMs || amount <= 0.0001 || this.health < keepAbove) {
         this._endHeal(false);
       }
 
