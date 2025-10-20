@@ -15,7 +15,6 @@ class Creature {
     this.yoff = random(1000);
 
     this.dna = dna; // DNA
-    // this.initHealth = 200;          // 생명 초기값
     this.initHealth = map(this.dna.genes[0], 0, 1, 150, 550);    // 생명 초기값
     this.health = 0;      // 생명 타이머 (수명)
 
@@ -289,9 +288,8 @@ class Creature {
           }
         }
 
-        if (stage === 3) {
-          this.isHalo = true;
-
+        // 스테이지 3에서 '색이 입혀진' 개체만 후광 획득
+        if (stage === 3 && this.isColored) {
           const was = this.isHalo;
           this.isHalo = true;
           // 방금 켜졌고 타이머가 없으면 시작
