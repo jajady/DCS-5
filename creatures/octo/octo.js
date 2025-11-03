@@ -6,12 +6,16 @@ class Octo extends Creature {
     this.eats = ["Bug", "Caterpillar"];
     this.fears = [""];
 
+    // 파츠들 생성
+    this.head = new OctoHead(this.r);                    // 얼굴 원
+    this.eyes = new OctoEyes(this.r * 0.66);             // 눈 + 눈동자
+
+    // 이 값들은 update()에서 계산해서 각 파츠에게 줌
+    this.moveVec = createVector(0, 0);
+    this.lookDir = createVector(0, 0);  // 눈이 부드럽게 따라가게 할 때 씀
+
     // 눈은 base blink가 관리 → 초기값만 있으면 됨
     this.eyeOpen = 1.0;
-
-    // ★ 귀 회전 상태
-    this._earAngle = 0;     // 현재 귀 회전각 (radians)
-    this._earEase = 0.1;    // 보간(부드럽게) 정도 (0~1)
 
     // 시각적 요소(Decorations)
     this.showBlusher = false;   // 볼터치
@@ -35,6 +39,33 @@ class Octo extends Creature {
     this.showFeet = (step >= 3);
     this.showHat = (step >= 4);
     this.showArc = (step >= 5);
+  }
+
+  update() {
+    super.update();
+
+    // 1) 얼굴 중심과 마우스의 차이 벡터 구하기
+    let move = this.velocity.copy();
+
+    // 속도가 0에 가까우면 눈이 흔들리니까 부드럽게
+    if (move.mag() > 0.0001) {
+      // 눈이 얼굴 밖으로 튀어나가지 않도록 얼굴 크기 기준으로 제한
+      move.setMag(this.r * 0.8);   // 얼굴 반지름의 25%만 이동
+      this.moveVec = move;
+    }
+
+    // (선택) 프레임마다 튀는 거 싫으면 이렇게 스무딩
+    this.lookDir.lerp(this.moveVec, 0.04);   // 0.2는 반응속도
+
+    // 2) 각 파츠에 “얼마나 따라갈지” 알려주기
+    // 파츠마다 비율이 다름 (원래 코드랑 같은 값)
+    // this.ears.setMove(move, -0.3);       // 귀는 반대 방향으로 살짝
+    this.eyes.setMove(move, 0.5);    // 눈은 0.5배, 눈동자는 20px 제한
+    // this.nose.setMove(move, 0.7);
+    // this.mouth.setMove(move, 0.4);
+    // this.eyebrows.setMove(move, 0.6);
+    // this.hair.setMove(move, 0.3);
+    // head(얼굴원)는 따라갈 필요 없음 → 그냥 0,0에 그릴 거라서
   }
 
   show() {
@@ -117,7 +148,7 @@ class Octo extends Creature {
 
     /* ── 몸통 ── */
     fill(this.currentColor);
-    circle(0, 0, r * 2);
+    this.head.show();
 
     // 이동 방향 → 귀 회전 목표
     const th = PI / 12;
@@ -132,31 +163,23 @@ class Octo extends Creature {
     const irisW = r * 0.10, irisH = r * 0.20 * this.eyeOpen;
 
     // 속눈썹(2단계~)
-    if (this.showEyelash) {
-      const lidTopY = eyeCy - eyeH * 0.5;
-      const nearCenter = eyeCy - r * 0.05;
-      const t = 1 - this.eyeOpen;
-      const lashEndY = lerp(lidTopY, nearCenter, constrain(t, 0, 1));
-      const lashLen = r * 0.12;
+    // if (this.showEyelash) {
+    //   const lidTopY = eyeCy - eyeH * 0.5;
+    //   const nearCenter = eyeCy - r * 0.05;
+    //   const t = 1 - this.eyeOpen;
+    //   const lashEndY = lerp(lidTopY, nearCenter, constrain(t, 0, 1));
+    //   const lashLen = r * 0.12;
 
-      stroke(0);
-      strokeWeight(max(0.5, r * 0.01));
-      noFill();
-      line(eyeCxL, eyeCy, eyeCxL - lashLen, lashEndY);
-      line(eyeCxR, eyeCy, eyeCxR + lashLen, lashEndY);
-      noStroke();
-    }
+    //   stroke(0);
+    //   strokeWeight(max(0.5, r * 0.01));
+    //   noFill();
+    //   line(eyeCxL, eyeCy, eyeCxL - lashLen, lashEndY);
+    //   line(eyeCxR, eyeCy, eyeCxR + lashLen, lashEndY);
+    //   noStroke();
+    // }
 
-    // 눈 (좌/우)
-    fill(this.bl);
-    ellipse(eyeCxL, eyeCy, eyeW, eyeH);
-    fill(this.currentColor);
-    ellipse(eyeCxL, eyeCy - r * 0.07, irisW, irisH);
+    this.eyes.show();
 
-    fill(this.bl);
-    ellipse(eyeCxR, eyeCy, eyeW, eyeH);
-    fill(this.currentColor);
-    ellipse(eyeCxR, eyeCy - r * 0.07, irisW, irisH);
 
     /* ── 블러셔(2단계~) ── */
     if (this.showBlusher) {
@@ -190,6 +213,6 @@ class Octo extends Creature {
     // === 입(공용 Mouth) ===
     // Mouth.show()는 부모 절대좌표를 스스로 계산하므로
     // translate 바깥에서 호출해도 OK
-    this.mouth.show();
+    // this.mouth.show();
   }
 }
