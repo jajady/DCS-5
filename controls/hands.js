@@ -12,7 +12,15 @@ let currentTrack = null;  // 현재 재생 중인 트랙
 let audioReady = false;   // 사용자 제스처로 오디오 활성화됐는지
 
 function preload() {       // ml5 handpose 준비
-  handPose = ml5.handPose({ flipped: true });
+  // handPose = ml5.handPose({ flipped: true });
+  // ✅ MediaPipe Hands 런타임으로 초기화 (TFHub 사용 안 함)
+  handPose = ml5.handPose({
+    runtime: 'mediapipe',
+    solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands', // 런타임 리소스 경로
+    modelType: 'full',   // 'lite' | 'full'
+    maxHands: 2
+    // flipped 옵션은 구버전 전용이었으니, 캔버스를 미러링해서 처리
+  });
 
   // ★ 경로/파일명은 네 자원에 맞게 수정!
   tracks[1] = loadSound('../assets/uplifting-pad-texture-113842.mp3');
