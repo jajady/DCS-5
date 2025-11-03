@@ -12,7 +12,7 @@ class Mouth {
     this.w = 0;
     this.h = 0;
 
-    // 펄스 상태 (Headset 로직 이식)
+    // 펄스 상태 (Octo 로직 이식)
     this._wasTouchedFood = false;
     this._pulseSeq = [];
     this._pulse = null; // { start, mult, up, hold, down }
@@ -76,7 +76,7 @@ class Mouth {
   }
 
   show() {
-    // Headset과 같은 모양(둥근 사각형 아래쪽만 라운드)
+    // Octo과 같은 모양(둥근 사각형 아래쪽만 라운드)
     push();
     noStroke();
     fill(this.parent.bl);

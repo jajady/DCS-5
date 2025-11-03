@@ -45,7 +45,7 @@ class Eye {
     this.x = headPos.x + baseR * this.offsetX;
     this.y = headPos.y + baseR * this.offsetY;
 
-    // 눈 크기(Headset 기준 비율 재사용)
+    // 눈 크기(Octo 기준 비율 재사용)
     this.w = this.parent.r * this.widthMult;
     const eyeHBase = this.parent.r * this.heightMult;
     this.h = eyeHBase * this.eyeOpen;

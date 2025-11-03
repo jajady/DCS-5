@@ -57,7 +57,7 @@ function setup() {
     audio: false
   });
   video.size(W, H);   // 기본: 640 × 480 픽셀 (4:3 비율)
-  // video.hide();
+  video.hide();
   Object.values(tracks).forEach(s => {
     s.setLoop(true);
     s.setVolume(0);   // 처음엔 0으로

@@ -17,7 +17,7 @@ class World {
       const dna = new DNA();
 
       if (pick === 1) this.creatures.push(new Caterpillar2(position, dna));
-      else this.creatures.push(new Headset(position, dna));
+      else this.creatures.push(new Octo(position, dna));
     }
 
     // 먹이

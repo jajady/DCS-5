@@ -1,10 +1,10 @@
-class Headset extends Creature {
+class Octo extends Creature {
   constructor(position, dna) {
     super(position, dna);
 
-    this.kind = "Headset";
+    this.kind = "Octo";
     this.eats = ["Bug", "Caterpillar"];
-    this.fears = ["Octopus"];
+    this.fears = [""];
 
     // 눈은 base blink가 관리 → 초기값만 있으면 됨
     this.eyeOpen = 1.0;
@@ -157,31 +157,6 @@ class Headset extends Creature {
     ellipse(eyeCxR, eyeCy, eyeW, eyeH);
     fill(this.currentColor);
     ellipse(eyeCxR, eyeCy - r * 0.07, irisW, irisH);
-
-    /* ── 귀 ── */
-    // 왼쪽 귀
-    push();
-    fill(this.currentColor);
-    translate(-r, 0);
-    rotate(this._earAngle);
-    ellipse(0, 0, r * 0.5, r * 2.5);
-    if (this.showEarShadow) {
-      fill(this.c3);
-      ellipse(0, -r * 0.3, r * 0.2, r * 0.8);
-    }
-    pop();
-
-    // 오른쪽 귀
-    push();
-    fill(this.currentColor);
-    translate(r, 0);
-    rotate(this._earAngle);
-    ellipse(0, 0, r * 0.5, r * 2.5);
-    if (this.showEarShadow) {
-      fill(this.c3);
-      ellipse(0, -r * 0.3, r * 0.2, r * 0.8);
-    }
-    pop();
 
     /* ── 블러셔(2단계~) ── */
     if (this.showBlusher) {
