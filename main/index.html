@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoSystem Simulation</title>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      background-color: #0a0a0a;
+      color: white;
+    }
+  </style>
+
+  <script src="../lib/p5.min.js"></script>
+  <script src="../addons/p5.sound.js"></script>
+
+  <!-- ml5: p5와 사운드 다음, 내 스케치들(hands.js 등)보다 먼저 -->
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+
+  <link rel="icon" href="data:,">
+</head>
+
+<body>
+  <main>
+  </main>
+  <!-- controls -->
+  <script src="../controls/hands.js"></script>
+  <script src="../controls/sound.js"></script>
+  <script src="../controls/zoom.js"></script>
+
+  <!-- face -->
+  <script src="../creatures/face/eye.js"></script>
+  <script src="../creatures/face/mouth.js"></script>
+
+  <!-- 생명체 -->
+  <script src="../creatures/creature.js"></script>
+  <script src="../creatures/headset.js"></script>
+  <!-- <script src="../creatures/caterpillar.js"></script>
+  <script src="../creatures/wave.js"></script> -->
+  <script src="../creatures/caterpillar2.js"></script>
+
+  <!-- dna -->
+  <script src="../creatures/dna.js"></script>
+
+  <!-- world -->
+  <script src="../world/utils.js"></script>
+  <script src="../world/food.js"></script>
+  <script src="../world/world.js"></script>
+
+  <!-- particle -->
+  <script src="../particles/emitter.js"></script>
+  <script src="../particles/particle.js"></script>
+
+  <!-- 흐름장 -->
+  <script src="../flow-field/flowField.js"></script>
+
+  <!-- sketch -->
+  <script src="sketch.js"></script>
+</body>
+
+</html>
