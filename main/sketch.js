@@ -36,7 +36,7 @@ let flowfield;
 // ---- stage4 배경 그라데이션용 ----
 let bgFrom, bgTo, bgT = 0;
 let bgIdx = 0;
-const BG_SPEED = 0.004;  // 느리게(부드럽게) 바뀜. 0.002~0.01 사이로 취향 조절
+const BG_SPEED = 0.002;  // 느리게(부드럽게) 바뀜. 0.002~0.01 사이로 취향 조절
 const STAGE4_PALETTE = [
   '#004ad4', // 파랑
   '#009fcfff', // 시안

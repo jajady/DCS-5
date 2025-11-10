@@ -23,7 +23,7 @@ class DNA {
         c4: color('#f9b701ff'),
       },
       {
-        c1: color('#ffff4cff'), // 노랑
+        c1: color('#ffff78ff'), // 노랑
         c2: color('#ffffceff'),
         c3: color('#ffb274ff'),
         c4: color('#ff674cff'),

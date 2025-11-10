@@ -1,57 +1,86 @@
 // ====================== Eyes (눈 + 눈동자 + 감기) ======================
 class OctoEyes {
   constructor(r) {
-    this.offset = createVector(0, 0);      // 눈 전체 이동
-    this.pupilOffset = createVector(0, 0); // 눈동자 이동
+    this.offset = createVector(0, 0);
+    this.pupilOffset = createVector(0, 0);
 
-    this.r = r;                            // 눈 크기 (지름) 150
-    this.pupilLimit = this.r * 0.5;       // 눈동자는 너무 많이 안 움직이게
+    this.r = r;
+    this.pupilLimit = this.r * 0.9;
 
-    // 깜빡임 상태
-    this.eyeOpen = 1.0;
-    this._blinkPhase = 0;
-    this._blinkSpeed = 0.25;
+    // 깜빡 상태
+    this.eyeOpen = 1.0;     // 1(완전 개안) ~ 0(완전 감김)
+    this._touching = false; // 손 닿음 여부
+    this._blinking = false;
+    this._blinkStart = 0;
+    this._blinkDur = 800;   // 한 번 깜빡(닫→열) 시간
+    this._blinkGap = 700;   // 다음 깜빡까지 대기
   }
 
-  // baseMove: 전체 얼굴이 움직이려는 벡터
-  // factor: 눈이 그걸 얼마나 따라갈지
-  // pupilLimit: 눈동자만 따로 제한
   setMove(baseMove, factor) {
     this.offset = baseMove.copy().mult(factor);
     this.pupilOffset = baseMove.copy();
     this.pupilOffset.limit(this.pupilLimit);
   }
 
+  // ★ Octo가 터치 상태를 넘겨줄 메서드
+  setTouching(flag) {
+    this._touching = !!flag;
+    if (!this._touching) this._blinking = false;
+  }
+
+  _startBlink(now = millis()) {
+    this._blinking = true;
+    this._blinkStart = now;
+  }
+
+  _updateBlink() {
+    const now = millis();
+    if (this._touching) {
+      if (!this._blinking) this._startBlink(now);
+      const t = (now - this._blinkStart) / this._blinkDur; // 0→1
+      if (t >= 1) {
+        this._blinking = false;
+        if (now - this._blinkStart >= this._blinkDur + this._blinkGap) {
+          this._startBlink(now);
+        }
+        this.eyeOpen = lerp(this.eyeOpen, 1.0, 0.35); // 쉬는 구간엔 서서히 개안
+      } else {
+        const closePhase = sin(PI * t); // 0→1→0
+        this.eyeOpen = 1.0 - closePhase; // 1→0→1
+      }
+    } else {
+      this._blinking = false;
+      this.eyeOpen = lerp(this.eyeOpen, 1.0, 0.2); // 터치 끝나면 천천히 열림
+    }
+  }
+
   show() {
+    this._updateBlink();
+
     push();
     translate(this.offset.x, this.offset.y);
 
-    const r = this.r;              // 기준 눈 크기
-    const eyeGap = r * 0.5;        // 두 눈 중심 간 거리 절반 (좌우 간격 조정)
-    const pupilSize = r * 0.4;     // 눈 빤짝이 크기
-    const eyelidHeight = r * 0.2;  // 눈 감을 때 두께
+    const r = this.r;
+    const eyeGap = r * 0.5;
+    const baseEyeW = r * 0.5;
+    const baseEyeH = r;
+    const eyeH = baseEyeH * this.eyeOpen;
 
-    if (mouseIsPressed) {
-      // 👁️ 눈 감기
-      fill('black');
-      rectMode(CENTER);
-      rect(-eyeGap, 0, r * 0.5, eyelidHeight, r * 0.05);
-      rect(eyeGap, 0, r * 0.5, eyelidHeight, r * 0.05);
-    } else {
-      // 👁️ 눈 뜸
-      fill('black');
-      ellipse(-eyeGap, 0, r * 0.5, r);  // 왼쪽 눈 흰자
-      ellipse(eyeGap, 0, r * 0.5, r);   // 오른쪽 눈 흰자
+    const pupilW = r * 0.25;
+    const pupilH = (r * 0.4) * this.eyeOpen;
 
-      // 👁️ 빤짝이
-      push();
-      // pupilOffset도 r 비율에 따라 조정
-      translate(this.pupilOffset.x * (r / 100), this.pupilOffset.y * (r / 100));
-      fill('white');
-      ellipse(-eyeGap, -pupilSize * 0.3, pupilSize * 0.5, pupilSize); // 왼쪽 눈동자
-      ellipse(eyeGap, -pupilSize * 0.3, pupilSize * 0.5, pupilSize);  // 오른쪽 눈동자
-      pop();
-    }
+    // 눈
+    fill('black');
+    ellipse(-eyeGap, 0, baseEyeW, eyeH);
+    ellipse(eyeGap, 0, baseEyeW, eyeH);
+
+    // 눈동자/하이라이트
+    push();
+    translate(this.pupilOffset.x * (r / 100), this.pupilOffset.y * (r / 100));
+    fill('white');
+    ellipse(-eyeGap, -pupilH * 0.3, pupilW, pupilH);
+    ellipse(eyeGap, -pupilH * 0.3, pupilW, pupilH);
+    pop();
 
     pop();
   }

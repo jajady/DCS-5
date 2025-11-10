@@ -9,6 +9,7 @@ class Octo extends Creature {
     // 파츠들 생성
     this.head = new OctoHead(this.r);                    // 얼굴 원
     this.eyes = new OctoEyes(this.r * 0.66);             // 눈 + 눈동자
+    this.mouth = new octoMouth(this.r * 0.5);
 
     // 이 값들은 update()에서 계산해서 각 파츠에게 줌
     this.moveVec = createVector(0, 0);
@@ -25,8 +26,6 @@ class Octo extends Creature {
     this.showHat = false;       // 모자
     this.showArc = false; // 겉에 호 그리기
 
-    // Mouth(parent, offsetX, offsetY, widthMult, heightMult)
-    this.mouth = new Mouth(this, 0, 0.3, 0.3, 0.15);
   }
 
 
@@ -62,7 +61,7 @@ class Octo extends Creature {
     // this.ears.setMove(move, -0.3);       // 귀는 반대 방향으로 살짝
     this.eyes.setMove(move, 0.5);    // 눈은 0.5배, 눈동자는 20px 제한
     // this.nose.setMove(move, 0.7);
-    // this.mouth.setMove(move, 0.4);
+    this.mouth.setMove(move, 0.5);
     // this.eyebrows.setMove(move, 0.6);
     // this.hair.setMove(move, 0.3);
     // head(얼굴원)는 따라갈 필요 없음 → 그냥 0,0에 그릴 거라서
@@ -75,7 +74,7 @@ class Octo extends Creature {
 
     // 2) 입(펄스) 상태 업데이트
     //    - 먹이 접촉 상승 에지에서 내부적으로 시퀀스 시작
-    this.mouth.update(this.touchedFood);
+    // this.mouth.update(this.touchedFood);
 
     // === 지속 후광 ===
     if (this.isHalo) {
@@ -210,9 +209,14 @@ class Octo extends Creature {
 
     pop(); // ← 본체 translate 블록 종료
 
+    // ★ 눈에게 현재 터치 상태 전달 (Octo에만 eyes가 있으므로 여기서 연결)
+    if (this.eyes && typeof this.eyes.setTouching === 'function') {
+      this.eyes.setTouching(this.touching);
+    }
+
     // === 입(공용 Mouth) ===
     // Mouth.show()는 부모 절대좌표를 스스로 계산하므로
     // translate 바깥에서 호출해도 OK
-    // this.mouth.show();
+    this.mouth.show();
   }
 }
