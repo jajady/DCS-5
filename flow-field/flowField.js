@@ -10,6 +10,11 @@ class FlowField {
     this.field = Array.from({ length: this.cols }, () => new Array(this.rows));
     this.colorIdx = Array.from({ length: this.cols }, () => new Array(this.rows));
 
+    // 선 알파 값(0→255) & 증가 속도
+    this.lineAlpha = 0;
+    this.alphaSpeed = 0.01;      // 프레임당 5씩 증가 (원하면 조절)
+    this._alphaDone = false;  // 255에 도달하면 true
+
     // 색 인덱스는 '한 번만' 랜덤으로 정해 둔다
     for (let i = 0; i < this.cols; i++) {
       for (let j = 0; j < this.rows; j++) {
@@ -60,6 +65,15 @@ class FlowField {
       { r: 255, g: 255, b: 0 },   // 노랑
     ];
 
+    // ★ 알파 값 증가 (255 되면 더 이상 증가 X)
+    if (!this._alphaDone) {
+      this.lineAlpha += this.alphaSpeed;
+      if (this.lineAlpha >= 255) {
+        this.lineAlpha = 255;
+        this._alphaDone = true;
+      }
+    }
+
     for (let i = 0; i < this.cols; i++) {
       for (let j = 0; j < this.rows; j++) {
         let w = width / this.cols;
@@ -70,17 +84,15 @@ class FlowField {
         let y = j * h + h / 2;
 
         const c = PALETTE[this.colorIdx[i][j]]; // 고정된 색 사용
-        stroke(c.r, c.g, c.b, 150);
+
+        stroke(c.r, c.g, c.b, this.lineAlpha);
         strokeWeight(0.7);
+
         push();
         translate(x, y);
         const a = createVector(-dir.x, -dir.y);
         const b = createVector(dir.x, dir.y);
         line(a.x, a.y, b.x * 200, b.y * 200);    // !!! 이 라인!!!!
-        // const L = dir.copy().rotate(-3 / 4 * PI).setMag(5);
-        // const R = dir.copy().rotate(3 / 4 * PI).setMag(5);
-        // line(b.x, b.y, b.x + L.x, b.y + L.y);
-        // line(b.x, b.y, b.x + R.x, b.y + R.y);
         pop();
       }
     }

@@ -10,7 +10,7 @@
 // 2: 닿으면 즉시 이타성 개체(isAltruist)
 // 3: 닿으면 즉시 자유의지 개체(hasFreeWill)
 // 4: (필요 시 자유 연출/휴지기 등으로 활용)
-let debug = false;
+let debug = true;
 
 //---- 생태계 ----//
 let stage;

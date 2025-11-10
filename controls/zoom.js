@@ -6,7 +6,7 @@ let handPointsWorld = [];   // 월드 좌표(줌/중심 반영 후)
 const PINCH_THRESH = 20;   // 각 손의 엄지-검지 거리 임계값(px)
 const ZOOM_DEAD_RATIO = 0.04; // 4% 이내 변화는 무시 (원하면 0.03~0.06 사이로 조절)
 let zoom = 1.0;            // 현재 줌 1.0
-let targetZoom = 5.0;      // 목표 줌(스무딩용) 초기값 1.0
+let targetZoom = 1.0;      // 목표 줌(스무딩용) 초기값 1.0
 let minZoom = 1.0;         // 화면보다 작게 보이지 않도록 최소 1.0
 let maxZoom = 20.0;         // 필요에 따라 조절
 const ZOOM_SMOOTH = 0.05;  // lerp 계수(부드러움)
@@ -95,21 +95,21 @@ function updateZoomState() {
   zoomActive = false;
 }
 
-/* HUD / 디버그 표시 */
-function drawHUD() {
-  if (debug) {
-    noStroke();
-    fill(255);
-    textSize(12);
-    textAlign(RIGHT, TOP);
-    text(
-      `zoom: ${zoom.toFixed(2)}\n` +
-      `target: ${targetZoom.toFixed(2)}\n` +
-      `stage: ${stage}\n`,
-      width - 10, 10
-    );
-  }
-}
+// /* HUD / 디버그 표시 */
+// function drawHUD() {
+//   if (debug) {
+//     noStroke();
+//     fill(255);
+//     textSize(12);
+//     textAlign(RIGHT, TOP);
+//     text(
+//       `zoom: ${zoom.toFixed(2)}\n` +
+//       `target: ${targetZoom.toFixed(2)}\n` +
+//       `stage: ${stage}\n`,
+//       width - 10, 10
+//     );
+//   }
+// }
 
 function screenToWorld(pt) {
   const cx = lastZoomCenter.x, cy = lastZoomCenter.y;

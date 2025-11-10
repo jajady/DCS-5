@@ -211,7 +211,7 @@ class Boid {
     push();
     translate(this.position.x, this.position.y);
     rotate(angle);
-    fill(180, 220);
+    fill(255, 200);
     noStroke();
     beginShape();
     vertex(this.r * 1, 0);       // 기존 this.r * 2 → 절반
