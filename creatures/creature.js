@@ -538,7 +538,7 @@ class Creature {
       const distance = p5.Vector.dist(this.position, foodPos[i]);   // 자신과 먹이 사이 거리
       const sumR = this.r + radiusList[i];     // ★ 먹이 반지름 반영
       if (distance < sumR) {    // 닿았다면
-        this.health += 300;   // 체력 회복
+        this.health += 250;   // 체력 회복
         this.maxspeed = min(this.maxspeed + 5, this.initMaxSpeed);     // maxspeed 회복
         radiusList[i] -= 0.1;      // 해당 먹이 크기 감소
         if (radiusList[i] <= 0) {    //먹이 크기가 2보다 작으면

@@ -5,9 +5,9 @@ class Boid {
     this.velocity = p5.Vector.random2D();     // 아무 방향으로 시작
     this.acceleration = createVector(0, 0);
 
-    this.r = 4;           // boid 반지름 (시각용)
-    this.maxspeed = 0.5;  // 최대 속도
-    this.maxforce = 0.04; // 최대 조향력
+    this.r = 2;           // boid 반지름 (시각용)
+    this.maxspeed = 0.3;  // 최대 속도
+    this.maxforce = 0.02; // 최대 조향력
   }
 
   // 매 프레임 호출
@@ -86,7 +86,7 @@ class Boid {
 
   // Alignment: 주변 boid들과 방향/속도 맞추기
   align(boids) {
-    const neighborDistance = 50;
+    const neighborDistance = 30;
     const sum = createVector(0, 0);
     let count = 0;
 
@@ -112,7 +112,7 @@ class Boid {
 
   // Cohesion: 주변 boid들의 중심 쪽으로
   cohere(boids) {
-    const neighborDistance = 50;
+    const neighborDistance = 30;
     const sum = createVector(0, 0);
     let count = 0;
 
@@ -140,7 +140,7 @@ class Boid {
     const positions = foodManager.foodPositions;
     const radii = foodManager.r;
 
-    const visionRange = 250;           // 최대 감지 거리
+    const visionRange = 70;           // 최대 감지 거리
     const fovHalfAngle = radians(60);  // 시야 반각 (총 120도)
     let closestIdx = -1;
     let closestDist = Infinity;
