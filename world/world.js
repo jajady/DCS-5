@@ -9,23 +9,25 @@ class World {
       const creatureCount = 2;                 // 생명체 종류 개수
       const pick = floor(random(creatureCount)) + 1;
 
-      // 중심 원 내부에서 균일 분포로 스폰
-      const position = randomPosInCenterDisk({
-        radius: Math.min(width, height) / 2 - margin,
-      });
+      // // 중심 원 내부에서 균일 분포로 스폰
+      // const position = randomPosInCenterDisk({
+      //   radius: Math.min(width, height) / 2 - margin,
+      // });
+
+      const position = createVector(random(width), random(height));
 
       const dna = new DNA();
 
-      if (pick === 1) this.creatures.push(new Caterpillar2(position, dna));
+      if (pick === 1) this.creatures.push(new Caterpillar(position, dna));
       else this.creatures.push(new Octo(position, dna));
     }
 
     // 먹이
-    this.food = new Food(populationSize * 0.75);
+    this.food = new Food(populationSize);
 
     // --- ★ Boid 무리 생성 ---
     this.flock = new Flock();
-    const boidCount = 80; // boid 개수
+    const boidCount = 400; // boid 개수
 
     // 중심 좌표 계산
     const centerX = width / 2;

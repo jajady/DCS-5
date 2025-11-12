@@ -71,13 +71,13 @@ class CaterpillerMouth {
 
   show() {
     push();
-    translate(this.offset.x * 0.4, this.offset.y * 0.8);
+    translate(this.offset.x * 0.4, this.offset.y * 0.5);
     // const mouthX = this.r * 0.2;
-    const mouthY = this.r * 0.7;
+    const mouthY = this.r * 0.8;
     const mouthW = this.r * 0.6;
     const mouthH = this.r * 0.2 * this.open;
 
-    fill('black');
+    fill(this.parent.bl);
     ellipse(0, mouthY, mouthW, mouthH);   // 입
     pop();
   }

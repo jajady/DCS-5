@@ -6,8 +6,8 @@ class Boid {
     this.acceleration = createVector(0, 0);
 
     this.r = 2;           // boid 반지름 (시각용)
-    this.maxspeed = 0.3;  // 최대 속도
-    this.maxforce = 0.02; // 최대 조향력
+    this.maxspeed = 0.25;  // 최대 속도
+    this.maxforce = 0.01; // 최대 조향력
   }
 
   // 매 프레임 호출
@@ -58,7 +58,7 @@ class Boid {
 
   // Separation: 너무 가까워지지 않기
   separate(boids) {
-    const desiredSeparation = 20;
+    const desiredSeparation = 15;
     const steer = createVector(0, 0);
     let count = 0;
 
@@ -183,7 +183,7 @@ class Boid {
 
       if (d < sumR) {
         // boid가 한 번 "베어먹을" 때 줄어드는 양
-        radii[i] -= 0.05;
+        radii[i] -= 0.01;
         if (radii[i] <= 0.2) {
           positions.splice(i, 1);
           radii.splice(i, 1);

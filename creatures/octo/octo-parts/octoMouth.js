@@ -76,7 +76,7 @@ class OctoMouth {
     const mouthW = this.r;
     const mouthH = this.r * 0.4 * this.open;
 
-    fill('black');
+    fill(this.parent.bl);
     ellipse(0, mouthY, mouthW, mouthH);   // 입
     pop();
   }

@@ -1,6 +1,7 @@
 // ====================== Eyes (눈 + 눈동자 + 깜빡임) ======================
 class OctoEyes {
-  constructor(r) {
+  constructor(parent, r) {
+    this.parent = parent;
     // 눈 전체 위치 이동
     this.offset = createVector(0, 0);
     // 눈동자 이동 (눈 안에서의 상대 위치)
@@ -84,14 +85,14 @@ class OctoEyes {
     const pupilH = (r * 0.4) * this.eyeOpen; // 눈 감기면 동공도 작게
 
     // 눈(검은 부분)
-    fill('black');
+    fill(this.parent.bl);
     ellipse(-eyeGap, 0, baseEyeW, eyeH); // 왼쪽 눈
     ellipse(eyeGap, 0, baseEyeW, eyeH);  // 오른쪽 눈
 
     // 눈동자(하얀 부분)
     push();
     translate(this.pupilOffset.x * (r / 100), this.pupilOffset.y * (r / 100));
-    fill('white');
+    fill(this.parent.wh);
     ellipse(-eyeGap, -pupilH * 0.3, pupilW, pupilH);
     ellipse(eyeGap, -pupilH * 0.3, pupilW, pupilH);
     pop();

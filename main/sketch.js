@@ -71,7 +71,7 @@ function setup() {
 
   world = new World(populationSize);
 
-  backgroundColor = color('#1b1b1bff');
+  backgroundColor = color('#030303');
   rHand = 50;  // 손 크기
 
   // Create particle emitters for each hand keypoint
@@ -154,9 +154,9 @@ function draw() {
   scale(zoom);
   translate(-cx, -cy);
   // stage 4에서 파란 배경 위로 흐름장(벡터 화살표) 그리기
-  if (stage === 4 && flowfield && debug) {
+  if (stage === 4 && flowfield) {
     flowfield.show();
-    console.log(debug);
+
   }
   world.run();
   pop();
@@ -180,11 +180,11 @@ function draw() {
 // --- 스테이지 전환 ---
 function keyPressed() {
   // 1) 스페이스: stage===4 일 때만 흐름장 디버그 토글
-  if (key === ' ' || keyCode === 32) {
-    debug = !debug;
-    console.log('flowfield debug:', debug);
-    return; // 스페이스 처리는 여기서 끝
-  }
+  // if (key === ' ' || keyCode === 32) {
+  //   debug = !debug;
+  //   console.log('flowfield debug:', debug);
+  //   return; // 스페이스 처리는 여기서 끝
+  // }
 
   // 2) 스테이지 전환
   if (key === '1') {

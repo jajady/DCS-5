@@ -1,11 +1,12 @@
 // ====================== Head (얼굴 원) ======================
 class OctoHead {
-  constructor(r) {
+  constructor(parent, r) {
+    this.parent = parent;
     this.r = r;   // Face 인스턴스 참조 저장
   }
 
   show() {
-    fill('white');
+    fill(this.parent.currentColor);
     ellipse(0, 0, this.r * 2, this.r * 2);   // 얼굴 본체
   }
 }

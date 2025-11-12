@@ -18,7 +18,7 @@ class Creature {
     this.initHealth = map(this.dna.genes[0], 0, 1, 150, 550);    // 생명 초기값
     this.health = 0;      // 생명 타이머 (수명)
 
-    this.maxspeed = map(this.dna.genes[0], 0, 1, 0.5, 0.1);     // 사이즈가 클수록 느려지도록 3~1
+    this.maxspeed = map(this.dna.genes[0], 0, 1, 0.8, 0.3);     // 사이즈가 클수록 느려지도록 3~1
     this.initMaxSpeed = this.maxspeed;        // 처음 배정된 최대속도 저장
     this.r = map(this.dna.genes[0], 0, 1, 1, 5);    // 사이즈가 클수록 느려지도록
     this.isBorder = false;        // 경계 관리
@@ -35,12 +35,14 @@ class Creature {
     this.baseC3 = color(pal.c3 || '#ffffff');        // 기준색 3
     this.baseC4 = color(pal.c4 || '#ffffff');        // 기준색 4
     this.black = color('#000000');
+    this.white = color('#ffffff');
     // 화면에 쓸 가변색(초기값은 기준색과 동일)
     this.currentColor = this.baseC1;
     this.c2 = this.baseC2;
     this.c3 = this.baseC3;
     this.c4 = this.baseC4;
     this.bl = this.black;
+    this.wh = this.white;
     this.isColored = false;         // 색이 변했는지
     this.touchedFood = false;       // 먹이와 닿았는지
 
@@ -540,7 +542,7 @@ class Creature {
       if (distance < sumR) {    // 닿았다면
         this.health += 250;   // 체력 회복
         this.maxspeed = min(this.maxspeed + 5, this.initMaxSpeed);     // maxspeed 회복
-        radiusList[i] -= 0.1;      // 해당 먹이 크기 감소
+        radiusList[i] -= 0.001;      // 해당 먹이 크기 감소
         if (radiusList[i] <= 0) {    //먹이 크기가 2보다 작으면
           foodPos.splice(i, 1);    // 해당 위치정보 배열에서 삭제
           radiusList.splice(i, 1);  // 해당 크기정보 배열에서 삭제
@@ -582,6 +584,9 @@ class Creature {
     this.xoff += 0.01;
     this.yoff += 0.01;
 
+    // 반경 50px 안에 먹이가 있으면 그쪽으로 살짝 방향 보정
+    this._seekNearbyFood(200);
+
     // 흐름장 드리프트는 stage 4에서만
     if (typeof stage !== 'undefined' && stage === 4 && flowfield?.lookup) {
       const drift = flowfield.lookup(this.position).mult(this.initMaxSpeed * 1.0);
@@ -611,6 +616,46 @@ class Creature {
         this.maxspeed = 0.1;      // 느려짐
       }
     }
+  }
+
+  // ★ 주변 먹이를 향해 살짝 방향을 틀어주는 헬퍼
+  _seekNearbyFood(visionRange = 100) {
+    // 전역 world / world.food 사용
+    if (!world || !world.food) return;
+
+    const foodPos = world.food.foodPositions;
+    const radiusList = world.food.r;
+
+    if (!foodPos || foodPos.length === 0) return;
+
+    let closest = null;
+    let closestDist = Infinity;
+
+    for (let i = 0; i < foodPos.length; i++) {
+      const pos = foodPos[i];
+      const d = p5.Vector.dist(this.position, pos);
+      if (d === 0 || d > visionRange) continue; // 반경 바깥이면 무시
+
+      if (d < closestDist) {
+        closestDist = d;
+        closest = pos;
+      }
+    }
+
+    // 반경 안에 아무 먹이도 없으면 그대로 노이즈 이동
+    if (!closest) return;
+
+    // 먹이 방향 벡터
+    const desired = p5.Vector.sub(closest, this.position);
+    if (desired.magSq() === 0) return;
+
+    // 이 생명체가 낼 수 있는 속도 크기 기준으로 맞춰주고
+    desired.setMag(this.maxspeed);
+
+    // 지금 노이즈 기반 속도(this.velocity)와
+    // 먹이 방향(desired)을 섞어서 살~짝 먹이 쪽으로 틀기
+    const STEER_AMOUNT = 0.08; // 0.05~0.2 사이에서 취향껏 조절
+    this.velocity.lerp(desired, STEER_AMOUNT);
   }
 
   // 화면 경계 처리 함수
@@ -655,6 +700,7 @@ class Creature {
     this.c3 = lerpColor(this.baseC3, backgroundColor, amt);
     this.c4 = lerpColor(this.baseC4, backgroundColor, amt);
     this.bl = lerpColor(this.black, backgroundColor, amt);
+    this.wh = lerpColor(this.white, backgroundColor, amt);
   }
 
   // 죽음

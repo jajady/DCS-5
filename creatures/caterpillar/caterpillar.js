@@ -1,8 +1,8 @@
-class Caterpillar2 extends Creature {
+class Caterpillar extends Creature {
   constructor(position, dna) {
     super(position, dna);
 
-    this.r = this.r * 2.3;
+    this.r = this.r * 2;
     this.kind = "Caterpillar";
     this.eats = [];
     this.fears = ["Bug"];
@@ -14,7 +14,7 @@ class Caterpillar2 extends Creature {
     this.init();
 
     // 파츠들 생성
-    this.eyes = new MovingEyes(this.r * 0.3);             // 눈 + 눈동자
+    this.eyes = new MovingEyes(this, this.r * 0.3);             // 눈 + 눈동자
 
     // Mouth(parent, offsetX, offsetY, widthMult, heightMult)
     this.mouth = new CaterpillerMouth(this, this.r * 0.4);
