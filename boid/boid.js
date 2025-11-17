@@ -5,7 +5,7 @@ class Boid {
     this.velocity = p5.Vector.random2D();     // 아무 방향으로 시작
     this.acceleration = createVector(0, 0);
 
-    this.r = 2;           // boid 반지름 (시각용)
+    this.r = 3;           // boid 반지름 (시각용)
     this.maxspeed = 0.25;  // 최대 속도
     this.maxforce = 0.01; // 최대 조향력
   }
@@ -214,10 +214,10 @@ class Boid {
     fill(255, 200);
     noStroke();
     beginShape();
-    vertex(this.r * 1.5, 0);       // 머리
-    vertex(0, -this.r * 0.5);     // 왼
-    vertex(-this.r * 3, 0);       // 꼬리
-    vertex(0, this.r * 0.5);      // 오
+    vertex(this.r * 1, 0);       // 머리
+    vertex(0, -this.r * 0.25);     // 왼
+    vertex(-this.r * 1, 0);       // 꼬리
+    vertex(0, this.r * 0.25);      // 오
     endShape(CLOSE);
     pop();
   }

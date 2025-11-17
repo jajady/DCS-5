@@ -11,28 +11,28 @@ class DNA {
 
     const palettes = [
       {
-        c1: color('#ff9ae9ff'), // 분홍
-        c2: color('#ffd4f6ff'),
-        c3: color('#73cdf7ff'),
-        c4: color('#9665feff')
+        c1: color('#ff9ae9'), // 분홍
+        c2: color('#ffd4f6'),
+        c3: color('#73cdf7'),
+        c4: color('#9665fe')
       },
       {
         c1: color('#7CFC00'), // 연두
-        c2: color('#d5ffaaff'),
-        c3: color('#efe11bff'),
-        c4: color('#f9b701ff'),
+        c2: color('#d5ffaa'),
+        c3: color('#efe11b'),
+        c4: color('#f9b701'),
       },
       {
-        c1: color('#ffff78ff'), // 노랑
-        c2: color('#ffffceff'),
-        c3: color('#ffb274ff'),
-        c4: color('#ff674cff'),
+        c1: color('#ffff78'), // 노랑
+        c2: color('#ffffce'),
+        c3: color('#ffb274'),
+        c4: color('#ff674c'),
       },
       {
-        c1: color('#a0fdffff'),  // 하늘색
-        c2: color('#d5fdfeff'),
-        c3: color('#52ff78ff'),
-        c4: color('#00e990ff')
+        c1: color('#a0fdff'),  // 하늘색
+        c2: color('#d5fdfe'),
+        c3: color('#52ff78'),
+        c4: color('#00e990')
       }
     ];
     // 색상 팔레트(객체)

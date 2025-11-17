@@ -18,8 +18,8 @@ class Octo extends Creature {
 
 
     // 시각적 요소(Decorations)
-    this.showBlusher = true;   // 볼터치
-    this.showEyelash = true;   // 속눈썹
+    this.showBlusher = false;   // 볼터치
+    this.showEyelash = false;   // 속눈썹
     this.showFeet = false;      // 발
     this.showArc = false; // 겉에 호 그리기
 
@@ -106,10 +106,10 @@ class Octo extends Creature {
     // ✅ fins 끝점들(local) 가져오기
     const finCenters = this.fins.getEllipseCentersLocal();
 
-    // ✅ 빨간 원(0,0) → 각 지느러미 ellipse까지 선 그리기
-
-    stroke('rgba(100, 150, 255, 0.5)');
-    strokeWeight(this.r * 0.17);
+    // stroke('rgba(100, 150, 255, 0.7)');
+    const hex = this.c2.toString('#rrggbb'); // p5.js v1.9부터 가능
+    stroke(hex + 'aa');
+    strokeWeight(this.r * 0.18);
     for (const p of finCenters) {
       line(0, 0, p.x, p.y);
     }
@@ -119,23 +119,6 @@ class Octo extends Creature {
     noStroke();
 
     this.fins.show();
-
-    /* ── 발(3단계~) ── */
-    if (this.showFeet) {
-      push();
-      translate(-r * 0.3, r * 1);
-      rotate(PI / 4);
-      fill(this.c4);
-      ellipse(0, 0, r * 0.6, r * 1);
-      pop();
-
-      push();
-      translate(r * 0.3, r * 1);
-      rotate(-PI / 4);
-      fill(this.c4);
-      ellipse(0, 0, r * 0.6, r * 1);
-      pop();
-    }
 
     /* ── 모자(4단계~) ── */
     if (this.showHat) {

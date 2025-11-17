@@ -6,7 +6,10 @@ class Fins {
     this.leftLocal = createVector(-150, 0);
     this.rightLocal = createVector(150, 0);
 
-    this.finCount = 20;
+    this.finCount = 30;
+
+    // 🔥 ellipseX를 저장할 변수
+    this.currentEllipseX = this.r;
   }
 
   setMove(baseMove, factor) {
@@ -19,16 +22,17 @@ class Fins {
     return { left, right };
   }
 
-  // ✅ 지느러미 ellipse 중심들의 "Octo 로컬 좌표"를 돌려주는 함수
+  // 🔥 sin으로 진동한 ellipseX가 반영된 지느러미 끝점 좌표 반환
   getEllipseCentersLocal() {
     const centers = [];
-    const rectLX = this.r;
-    const base = createVector(rectLX, 0);     // 회전 전 기준점
+
+    // 🔥 show()에서 업데이트된 ellipseX 사용!
+    const base = createVector(this.currentEllipseX, 0);
     const step = TWO_PI / this.finCount;
 
     for (let i = 0; i < this.finCount; i++) {
-      const v = base.copy().rotate(i * step); // 각도만큼 회전
-      v.add(this.offset);                     // fins.offset만큼 평행 이동
+      const v = base.copy().rotate(i * step);
+      v.add(this.offset);
       centers.push(v);
     }
     return centers;
@@ -38,27 +42,37 @@ class Fins {
     push();
     translate(this.offset.x, this.offset.y);
 
-    const rectLX = this.r;
-    const rectLY = - this.r * 0.025;
-    const rectRX = 0;
-    const rectRY = this.r * 0.025;
+    // 🌊 sin 기반 진동값 (0~1)
+    const t = frameCount * 0.05;
+    const sinValue = (sin(t) + 1) * 0.5;
+
+    // 🔥 최소값 = this.r*0.1, 최대값 = this.r
+    const minX = this.r * 0.4;      // 1/10
+    const maxX = this.r * 2;
+    const ellipseX = minX + sinValue * (maxX - minX);  // = r*0.1 + sin*(r*0.9)
+
+    // 🔥 진동한 ellipseX를 상태로 저장해서 getEllipseCentersLocal에 반영
+    this.currentEllipseX = ellipseX;
+
+    const baseColor = this.parent.c2;      // Octo의 c2
+    const rC = red(baseColor);
+    const gC = green(baseColor);
+    const bC = blue(baseColor);
+    const ellipseAlpha = 0.4 * 255;       // 예: 40% 불투명도
+
     const ellipseW = this.r * 0.1;
     const ellipseH = this.r * 0.1;
 
     for (let i = 0; i < this.finCount; i++) {
-      strokeWeight(1);
-      stroke('rgba(100, 150, 255, 0.5)');
-      // fill('rgba(100, 150, 255, 0.5)');
-      // if (i === 0) {
-      //   fill('lightpink');
-      // }
-      // rectMode(CORNERS);
-      // rect(rectLX, rectLY, rectRX, rectRY);
-      fill('rgba(198, 216, 255, 1)');
-      ellipse(rectLX, 0, ellipseW, ellipseH);
+      strokeWeight(this.r * 0.18);
+      stroke(rC, gC, bC, 0.3 * 255);
+      // fill('rgba(198, 216, 255, 1)');
+      fill(rC, gC, bC, ellipseAlpha);
+      ellipse(ellipseX, 0, ellipseW, ellipseH);
 
       rotate(TWO_PI / this.finCount);
     }
+
     pop();
   }
 }
