@@ -10,7 +10,7 @@ class Octo extends Creature {
     this.head = new OctoHead(this, this.r);            // 얼굴 원
     this.eyes = new OctoEyes(this, this.r * 0.33);     // 눈 + 눈동자
     this.mouth = new OctoMouth(this, this.r * 0.2);
-    this.fins = new Fins(this, this.r);
+    this.fins = new Fins(this, 0.5 * this.r * this.r);
 
     // 이 값들은 update()에서 계산해서 각 파츠에게 줌
     this.moveVec = createVector(0, 0);

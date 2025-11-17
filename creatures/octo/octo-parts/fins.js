@@ -26,9 +26,14 @@ class Fins {
   show() {
     push();
     translate(this.offset.x, this.offset.y);
-    const rectX = this.r * 0.5;
-    const rectW = this.r;
-    const rectH = this.r * 0.05;
+    // const rectX = this.r * 0.5;
+    // const rectW = this.r;
+    // const rectH = this.r * 0.05;
+
+    const rectLX = this.r;
+    const rectLY = - this.r * 0.025;
+    const rectRX = 0;
+    const rectRY = this.r * 0.025;
     const ellipseW = this.r * 0.1;
     const ellipseH = this.r * 0.1;
 
@@ -39,10 +44,14 @@ class Fins {
       if (i === 0) {
         fill('lightpink');
       }
-      rectMode(CENTER);
-      rect(rectX, 0, rectW, rectH);    //  지느러미 뼈대
+      // rectMode(CENTER);
+      rectMode(CORNERS);
+      // rect(rectX, 0, rectW, rectH);    //  지느러미 뼈대
+      rect(rectLX, rectLY, rectRX, rectRY);
       fill('rgba(198, 216, 255, 1)');
-      ellipse((rectX + rectW / 2), 0, ellipseW, ellipseH);    // 지느러미 끝점
+      // ellipse((rectX + rectW / 2), 0, ellipseW, ellipseH);    // 지느러미 끝점
+      ellipse(rectLX, 0, ellipseW, ellipseH);
+
 
       rotate(TWO_PI / this.finCount);
     }
