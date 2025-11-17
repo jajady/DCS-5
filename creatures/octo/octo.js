@@ -20,9 +20,7 @@ class Octo extends Creature {
     // 시각적 요소(Decorations)
     this.showBlusher = false;   // 볼터치
     this.showEyelash = false;   // 속눈썹
-    this.showFeet = false;      // 발
-    this.showArc = false; // 겉에 호 그리기
-
+    this._finsWaveStarted = false;
   }
 
 
@@ -30,8 +28,13 @@ class Octo extends Creature {
   onEvolve(step) {
     // 2단계: 블러셔, 귀음영 추가,  속눈썹
     this.showBlusher = (step >= 2);
-    // this.showF2eet = (step >= 3);
-    this.showArc = (step >= 5);
+
+    if (step >= 3 && !this._finsWaveStarted) {
+      if (this.fins && typeof this.fins.startWave === 'function') {
+        this.fins.startWave();
+      }
+      this._finsWaveStarted = true;
+    }
   }
 
   update() {
@@ -100,25 +103,22 @@ class Octo extends Creature {
 
     // === 본체 그리기 ===
     push();
-    noStroke();
     translate(this.position.x, this.position.y);
 
-    // ✅ fins 끝점들(local) 가져오기
-    const finCenters = this.fins.getEllipseCentersLocal();
+    // 진화 3단계 이상일 때만 line 활성화
+    if (this.evolutionStep >= 3) {
+      this.fins.show();
+      const finCenters = this.fins.getEllipseCentersLocal();
 
-    // stroke('rgba(100, 150, 255, 0.7)');
-    const hex = this.c2.toString('#rrggbb'); // p5.js v1.9부터 가능
-    stroke(hex + 'aa');
-    strokeWeight(this.r * 0.18);
-    for (const p of finCenters) {
-      line(0, 0, p.x, p.y);
+      const hex = this.c2.toString('#rrggbb');
+      stroke(hex + 'aa');                // 동일 색 + 알파
+      strokeWeight(this.r * 0.18);
+
+      for (const p of finCenters) {
+        line(0, 0, p.x, p.y);
+      }
     }
-
-
-
     noStroke();
-
-    this.fins.show();
 
     /* ── 모자(4단계~) ── */
     if (this.showHat) {
@@ -153,18 +153,6 @@ class Octo extends Creature {
 
     this.mouth.show();
     this.eyes.show();
-
-    /* ── 외곽 호(5단계~) ── */
-    if (this.showArc) {
-      noFill();
-      stroke(this.c2);
-      strokeWeight(0.5);
-      arc(0, 0, r * 3.75, r * 3.75, -PI / 3, PI / 4);
-      arc(0, 0, r * 4.3, r * 4.3, PI / 8, PI / 3);
-      arc(0, 0, r * 3.75, r * 3.75, PI * 4 / 6, PI * 7 / 6);
-      arc(0, 0, r * 4.3, r * 4.3, PI * 6.5 / 6, PI * 8.2 / 6);
-      noStroke();
-    }
 
     // fill('red');
     // circle(0, 0, this.r * 0.5);

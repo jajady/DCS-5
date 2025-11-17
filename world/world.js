@@ -73,10 +73,12 @@ class World {
         if (!c) return;
         c.isLeader = true;
         c.leaderSince = millis();
-        c.leaderRank = i + 1;
 
         const home = centersBySize[i] || centersBySize[centersBySize.length - 1];
-        if (home) c.home = createVector(home.x, home.y);
+        if (home) {
+          // 🔥 정박 리더로 실제 지정
+          c.anchorTo(home, i + 1);   // anchorRank도 여기서 1~3으로 설정됨
+        }
       });
 
       this._leadersAssignedAtStage4 = true;

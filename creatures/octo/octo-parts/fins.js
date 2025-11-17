@@ -8,8 +8,26 @@ class Fins {
 
     this.finCount = 30;
 
-    // 🔥 ellipseX를 저장할 변수
-    this.currentEllipseX = this.r;
+    // 범위
+    this.minX = this.r * 0.4;
+    this.maxX = this.r * 2;
+
+    // 처음엔 무조건 min에서 시작
+    this.currentEllipseX = this.minX;
+
+    // 개체별 속도만 랜덤
+    this.speed = random(0.02, 0.06);
+
+    // 애니메이션 시작 시점 (evo 3단계부터)
+    this.startFrame = 0;
+    this.active = false;   // 아직 진화 3단계 전이면 false
+  }
+
+  // 🔥 Octo가 "이제 3단계 됐어"라고 알려줄 때 호출
+  startWave() {
+    this.active = true;
+    this.startFrame = frameCount;  // 이 시점을 기준으로 localFrame 계산
+    this.currentEllipseX = this.minX; // 첫 프레임은 항상 min
   }
 
   setMove(baseMove, factor) {
@@ -22,11 +40,9 @@ class Fins {
     return { left, right };
   }
 
-  // 🔥 sin으로 진동한 ellipseX가 반영된 지느러미 끝점 좌표 반환
+  // sin으로 진동한 ellipseX가 반영된 지느러미 끝점 좌표 반환
   getEllipseCentersLocal() {
     const centers = [];
-
-    // 🔥 show()에서 업데이트된 ellipseX 사용!
     const base = createVector(this.currentEllipseX, 0);
     const step = TWO_PI / this.finCount;
 
@@ -42,23 +58,26 @@ class Fins {
     push();
     translate(this.offset.x, this.offset.y);
 
-    // 🌊 sin 기반 진동값 (0~1)
-    const t = frameCount * 0.05;
-    const sinValue = (sin(t) + 1) * 0.5;
+    let ellipseX = this.minX;
 
-    // 🔥 최소값 = this.r*0.1, 최대값 = this.r
-    const minX = this.r * 0.4;      // 1/10
-    const maxX = this.r * 2;
-    const ellipseX = minX + sinValue * (maxX - minX);  // = r*0.1 + sin*(r*0.9)
+    if (this.active) {
+      // 🔥 evo 3단계가 된 이후 경과 프레임(local time)
+      const localFrame = frameCount - this.startFrame;
 
-    // 🔥 진동한 ellipseX를 상태로 저장해서 getEllipseCentersLocal에 반영
+      // localFrame = 0일 때 sin(-PI/2) = -1 → minX에서 시작
+      const t = localFrame * this.speed - HALF_PI;
+      const sinValue = (sin(t) + 1) * 0.5; // 0~1
+
+      ellipseX = this.minX + sinValue * (this.maxX - this.minX);
+    }
+
     this.currentEllipseX = ellipseX;
 
-    const baseColor = this.parent.c2;      // Octo의 c2
+    const baseColor = this.parent.c2;
     const rC = red(baseColor);
     const gC = green(baseColor);
     const bC = blue(baseColor);
-    const ellipseAlpha = 0.4 * 255;       // 예: 40% 불투명도
+    const ellipseAlpha = 0.4 * 255;
 
     const ellipseW = this.r * 0.1;
     const ellipseH = this.r * 0.1;
@@ -66,10 +85,9 @@ class Fins {
     for (let i = 0; i < this.finCount; i++) {
       strokeWeight(this.r * 0.18);
       stroke(rC, gC, bC, 0.3 * 255);
-      // fill('rgba(198, 216, 255, 1)');
       fill(rC, gC, bC, ellipseAlpha);
-      ellipse(ellipseX, 0, ellipseW, ellipseH);
 
+      ellipse(ellipseX, 0, ellipseW, ellipseH);
       rotate(TWO_PI / this.finCount);
     }
 

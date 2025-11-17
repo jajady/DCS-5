@@ -21,6 +21,8 @@ class Creature {
     this.maxspeed = map(this.dna.genes[0], 0, 1, 1, 0.1);     // 사이즈가 클수록 느려지도록 3~1
     this.initMaxSpeed = this.maxspeed;        // 처음 배정된 최대속도 저장
     this.r = map(this.dna.genes[0], 0, 1, 1, 10);    // 사이즈가 클수록 느려지도록
+    this.baseR = this.r;
+    this.levelRadiusStep = 0.5;   // level 1당 +8% (원하는 만큼 조절)
     this.isBorder = false;        // 경계 관리
 
     // 스폰(등장) 상태
@@ -152,6 +154,13 @@ class Creature {
       this.level += 1;
       this._lastLevelUpMs += 10000;
       // console.log(`[LEVEL UP] ${this.kind||'Creature'} → L${this.level}`);
+
+      // 🔥 level에 따라 반지름도 조금씩 커지게
+      const maxVisualLevel = 10;                     // 너무 커지지 않게 상한 (원하면 조절)
+      const L = constrain(this.level, 0, maxVisualLevel);
+      const scaleFromLevel = 1 + L * this.levelRadiusStep;  // 1, 1.08, 1.16, ...
+
+      this.r = this.baseR * scaleFromLevel;
     }
   }
 
