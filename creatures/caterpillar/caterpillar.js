@@ -9,13 +9,16 @@ class Caterpillar extends Creature {
 
     this.circles = [];
     this.circleCount = this.r * 2;
-    // this.circleCount = floor(random(this.r * 2.5, this.r * 3.5));
     this.lerpAmt = 0.2;
     this.init();
 
+    // 🔹 눈/입의 "기준 크기"를 따로 저장
+    this.eyeBaseR = this.r * 0.33;
+    this.mouthBaseR = this.r * 0.2;
+
     // 파츠들 생성
-    this.eyes = new CaterpillarEyes(this, this.r * 0.33);   // 눈 + 눈동자
-    this.mouth = new CaterpillerMouth(this, this.r * 0.2);
+    this.eyes = new CaterpillarEyes(this, this.eyeBaseR);
+    this.mouth = new CaterpillerMouth(this, this.mouthBaseR);
 
     // 이 값들은 update()에서 계산해서 각 파츠에게 줌
     this.moveVec = createVector(0, 0);
@@ -100,6 +103,16 @@ class Caterpillar extends Creature {
     const r = this.r * s;
     const x = this.position.x;
     const y = this.position.y;
+
+    // 🔹 눈/입도 동일한 스케일을 받도록 현재 r 갱신
+    if (this.eyes) {
+      this.eyes.r = this.eyeBaseR * s;
+      // 눈동자 움직임 제한도 함께 스케일
+      this.eyes.pupilLimit = this.eyes.r;
+    }
+    if (this.mouth) {
+      this.mouth.r = this.mouthBaseR * s;
+    }
 
     // === 지속 후광 ===
     if (this.isHalo) {

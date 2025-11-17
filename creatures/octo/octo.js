@@ -2,15 +2,16 @@ class Octo extends Creature {
   constructor(position, dna) {
     super(position, dna);
 
-    // this.kind = "Octo";
-    // this.eats = ["Bug", "Caterpillar"];
-    // this.fears = [""];
+    this.headBaseR = this.r;
+    this.eyeBaseR = this.r * 0.33;
+    this.mouthBaseR = this.r * 0.2;
+    // fins도 나중에 같이 키우고 싶으면 finsBaseR = this.r * 2; 처럼 저장해두면 됨
 
     // 파츠들 생성
-    this.head = new OctoHead(this, this.r);            // 얼굴 원
-    this.eyes = new OctoEyes(this, this.r * 0.33);     // 눈 + 눈동자
-    this.mouth = new OctoMouth(this, this.r * 0.2);
-    this.fins = new Fins(this, this.r * 2);
+    this.head = new OctoHead(this, this.headBaseR);
+    this.eyes = new OctoEyes(this, this.eyeBaseR);
+    this.mouth = new OctoMouth(this, this.mouthBaseR);
+    this.fins = new Fins(this, this.r * 2); // 일단 기존 그대로
 
     // 이 값들은 update()에서 계산해서 각 파츠에게 줌
     this.moveVec = createVector(0, 0);
@@ -65,6 +66,18 @@ class Octo extends Creature {
     // 1) 버프 스케일
     const s = this.getVisualScale();
     const r = this.r * s;
+
+    // 🔹 머리/눈/입도 동일 스케일을 받도록 r 갱신
+    if (this.head) {
+      this.head.r = this.headBaseR * s;
+    }
+    if (this.eyes) {
+      this.eyes.r = this.eyeBaseR * s;
+      this.eyes.pupilLimit = this.eyes.r;   // 눈동자 이동 제한도 같이 스케일
+    }
+    if (this.mouth) {
+      this.mouth.r = this.mouthBaseR * s;
+    }
 
     // === 지속 후광 ===
     if (this.isHalo) {
