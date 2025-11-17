@@ -104,14 +104,16 @@ class Caterpillar extends Creature {
     const x = this.position.x;
     const y = this.position.y;
 
-    // 🔹 눈/입도 동일한 스케일을 받도록 현재 r 갱신
+    // 🔹 level 때문에 커진 비율 (레벨 없으면 1)
+    const levelScale = this.baseR > 0 ? (this.r / this.baseR) : 1;
+
+    // 🔹 눈/입도 레벨 + 버프 스케일 모두 반영
     if (this.eyes) {
-      this.eyes.r = this.eyeBaseR * s;
-      // 눈동자 움직임 제한도 함께 스케일
-      this.eyes.pupilLimit = this.eyes.r;
+      this.eyes.r = this.eyeBaseR * levelScale * s;
+      this.eyes.pupilLimit = this.eyes.r;   // 동공 이동 제한도 같이 스케일
     }
     if (this.mouth) {
-      this.mouth.r = this.mouthBaseR * s;
+      this.mouth.r = this.mouthBaseR * levelScale * s;
     }
 
     // === 지속 후광 ===
@@ -261,6 +263,16 @@ class Caterpillar extends Creature {
     if (this.eyes && typeof this.eyes.setTouching === 'function') {
       this.eyes.setTouching(this.touching);
     }
+
+    push();
+    fill('red');
+    noStroke();
+    textSize(10);
+    textAlign(CENTER);
+    if (this.anchorRank > 0) {
+      text(`L${this.anchorRank}`, this.position.x, this.position.y - this.r - 10);
+    }
+    pop();
   }
 
   init() {    // 몸통 원 위치 저장 배열 생성

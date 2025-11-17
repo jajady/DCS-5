@@ -9,11 +9,6 @@ class World {
       const creatureCount = 2;                 // 생명체 종류 개수
       const pick = floor(random(creatureCount)) + 1;
 
-      // // 중심 원 내부에서 균일 분포로 스폰
-      // const position = randomPosInCenterDisk({
-      //   radius: Math.min(width, height) / 2 - margin,
-      // });
-
       const position = createVector(random(width), random(height));
 
       const dna = new DNA();
@@ -58,10 +53,18 @@ class World {
     // 먹이 업데이트/스폰
     this.food.run();
 
-    // ── stage 4 진입 시 “레벨 TOP3” 리더 지정 (딱 1회)
+    // ── stage 4 진입 시 “가장 큰 r TOP3” 리더 지정 (딱 1회)
     if (stage === 4 && !this._leadersAssignedAtStage4) {
+      const sorted = [...this.creatures].sort((a, b) => (b.r || 0) - (a.r || 0));
+      console.log('=== stage4 leader candidates (by r) ===');
+      sorted.slice(0, 5).forEach((c, idx) => {
+        console.log(idx, 'r=', c.r, 'level=', c.level, 'isHalo=', c.isHalo);
+      });
+
+
       const top = [...this.creatures]
-        .sort((a, b) => (b.level || 0) - (a.level || 0))
+        // 🔥 level 대신 r(반지름) 기준으로 정렬
+        .sort((a, b) => (b.r || 0) - (a.r || 0))
         .slice(0, 3);
 
       // 큰/중/작 센터 (radius 큰 순)
@@ -76,8 +79,7 @@ class World {
 
         const home = centersBySize[i] || centersBySize[centersBySize.length - 1];
         if (home) {
-          // 🔥 정박 리더로 실제 지정
-          c.anchorTo(home, i + 1);   // anchorRank도 여기서 1~3으로 설정됨
+          c.anchorTo(home, i + 1);
         }
       });
 
@@ -89,7 +91,10 @@ class World {
       const c = this.creatures[i];
       c.run();
       c.eat(this.food);
-      c.updateHaloHeal(this.creatures);
+      // ✅ stage 4에서는 체력 나눠주기 로직 호출 안 함
+      if (typeof stage === 'undefined' || stage !== 4) {
+        c.updateHaloHeal(this.creatures);
+      }
 
       if (c.dead()) {
         this.creatures.splice(i, 1);
@@ -171,7 +176,7 @@ class World {
     // ★ 보조 규칙: stage3가 된 뒤 15초가 지났는데 아직 4가 아니면 강제 4로
     if (stage === 3 && this._stage3EnteredMs != null) {
       const elapsed = millis() - this._stage3EnteredMs;
-      if (elapsed >= 150000) {    // 잠시 수정
+      if (elapsed >= 60000 * 10) {    // 잠시 수정
         goStage(4);
         return;
       }

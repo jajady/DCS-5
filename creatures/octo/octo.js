@@ -5,13 +5,13 @@ class Octo extends Creature {
     this.headBaseR = this.r;
     this.eyeBaseR = this.r * 0.33;
     this.mouthBaseR = this.r * 0.2;
-    // fins도 나중에 같이 키우고 싶으면 finsBaseR = this.r * 2; 처럼 저장해두면 됨
+    this.finsBaseR = this.r * 2;
 
     // 파츠들 생성
     this.head = new OctoHead(this, this.headBaseR);
     this.eyes = new OctoEyes(this, this.eyeBaseR);
     this.mouth = new OctoMouth(this, this.mouthBaseR);
-    this.fins = new Fins(this, this.r * 2); // 일단 기존 그대로
+    this.fins = new Fins(this, this.finsBaseR);
 
     // 이 값들은 update()에서 계산해서 각 파츠에게 줌
     this.moveVec = createVector(0, 0);
@@ -28,7 +28,7 @@ class Octo extends Creature {
   // ★ 진화 훅
   onEvolve(step) {
     // 2단계: 블러셔, 귀음영 추가,  속눈썹
-    this.showBlusher = (step >= 2);
+    this.showBlusher = (step >= 4);
 
     if (step >= 3 && !this._finsWaveStarted) {
       if (this.fins && typeof this.fins.startWave === 'function') {
@@ -66,18 +66,15 @@ class Octo extends Creature {
     // 1) 버프 스케일
     const s = this.getVisualScale();
     const r = this.r * s;
+    const levelScale = this.baseR > 0 ? (this.r / this.baseR) : 1;
 
-    // 🔹 머리/눈/입도 동일 스케일을 받도록 r 갱신
-    if (this.head) {
-      this.head.r = this.headBaseR * s;
-    }
+    // 버프스케일, level에 따라 커지는 r값 적용
+    if (this.head) this.head.r = this.headBaseR * levelScale * s;
     if (this.eyes) {
-      this.eyes.r = this.eyeBaseR * s;
-      this.eyes.pupilLimit = this.eyes.r;   // 눈동자 이동 제한도 같이 스케일
+      this.eyes.r = this.eyeBaseR * levelScale * s;
+      this.eyes.pupilLimit = this.eyes.r;
     }
-    if (this.mouth) {
-      this.mouth.r = this.mouthBaseR * s;
-    }
+    if (this.mouth) this.mouth.r = this.mouthBaseR * levelScale * s;
 
     // === 지속 후광 ===
     if (this.isHalo) {
@@ -86,7 +83,7 @@ class Octo extends Creature {
       const pulse = 0.6 + 0.4 * sin(frameCount * 0.05); // 살짝 숨쉬듯 펄스
       const alpha = 90 + 60 * pulse; // 알파값 변화
       fill(209, 255, 176, alpha);    // 연초록 빛 후광
-      ellipse(this.position.x, this.position.y, this.r * 4.5, this.r * 4.5);  // 후광
+      ellipse(this.position.x, this.position.y, this.r * 1.8, this.r * 1.8);  // 후광
       pop();
     }
 
@@ -175,6 +172,16 @@ class Octo extends Creature {
     if (this.eyes && typeof this.eyes.setTouching === 'function') {
       this.eyes.setTouching(this.touching);
     }
+
+    push();
+    fill('red');
+    noStroke();
+    textSize(10);
+    textAlign(CENTER);
+    if (this.anchorRank > 0) {
+      text(`L${this.anchorRank}`, this.position.x, this.position.y - this.r - 10);
+    }
+    pop();
 
   }
 }

@@ -10,7 +10,7 @@ class Fins {
 
     // 범위
     this.minX = this.r * 0.4;
-    this.maxX = this.r * 2;
+    this.maxX = this.r;
 
     // 처음엔 무조건 min에서 시작
     this.currentEllipseX = this.minX;

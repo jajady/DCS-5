@@ -22,7 +22,7 @@ class Creature {
     this.initMaxSpeed = this.maxspeed;        // 처음 배정된 최대속도 저장
     this.r = map(this.dna.genes[0], 0, 1, 1, 10);    // 사이즈가 클수록 느려지도록
     this.baseR = this.r;
-    this.levelRadiusStep = 0.5;   // level 1당 +8% (원하는 만큼 조절)
+    this.levelRadiusStep = 0.1;   // level 1당 +8% (원하는 만큼 조절)
     this.isBorder = false;        // 경계 관리
 
     // 스폰(등장) 상태
@@ -98,6 +98,9 @@ class Creature {
 
     // “수혜자 입장”에서 중복 힐 방지 플래그(다른 기부자가 동시에 주입 못하게)
     this._healingFrom = null;     // 누가 나에게 주고 있나?
+    this._lastHealTarget = null;
+    this._lastHealEndMs = 0;
+    this.healCooldownMsPerTarget = 3000;   // 예: 같은 애는 3초 동안 다시 힐하지 않기
 
     // ==== 레벨(후광 + stage3에서만 10초마다 +1) ====
     this.level = 0;
@@ -110,11 +113,11 @@ class Creature {
     this.home = null;                  // 배정된 중심점 p5.Vector
     this.homeStartPos = null;
     this.homeStartMs = 0;
-    this.homeDurationMs = 10000;       // 10초 귀소
+    this.homeDurationMs = 30000;       // 10초 귀소
     this.arriveRadius = 14;
     this.arrived = false;
     this.spinAngle = 0;
-    this.spinSpeed = 0.06;             // 도착 후 자전 속도
+    this.spinSpeed = 0.2;             // 도착 후 자전 속도
   }
 
   run() {
@@ -135,7 +138,6 @@ class Creature {
   }
 
   // 후광 보유 시 시간에 따라 레벨 상승 (초당 0.06 → 약 67초에 레벨4 도달)
-  // 원하는 속도로 HALO_RATE 조정 가능
   // stage===3 이고 isHalo===true 인 동안에만, 10초마다 level += 1
   tickLevel() {
     const inStage3WithHalo = (typeof stage !== 'undefined' && stage === 3 && this.isHalo);
@@ -155,12 +157,16 @@ class Creature {
       this._lastLevelUpMs += 10000;
       // console.log(`[LEVEL UP] ${this.kind||'Creature'} → L${this.level}`);
 
-      // 🔥 level에 따라 반지름도 조금씩 커지게
-      const maxVisualLevel = 10;                     // 너무 커지지 않게 상한 (원하면 조절)
-      const L = constrain(this.level, 0, maxVisualLevel);
-      const scaleFromLevel = 1 + L * this.levelRadiusStep;  // 1, 1.08, 1.16, ...
+      // 🔥 level에 따라 반지름도 조금씩 커지게 (단, stage 4 미만에서만)
+      if (typeof stage === 'undefined' || stage < 4) {
+        const maxVisualLevel = 10;                     // 너무 커지지 않게 상한
+        const L = constrain(this.level, 0, maxVisualLevel);
+        const scaleFromLevel = 1 + L * this.levelRadiusStep;  // 1, 1.05, 1.10, ...
 
-      this.r = this.baseR * scaleFromLevel;
+        this.r = this.baseR * scaleFromLevel;
+      }
+      // stage >= 4인 경우에는 level은 올라가도 r은 더 이상 커지지 않고,
+      // stage 3에서 마지막으로 계산된 크기를 그대로 유지함.
     }
   }
 
@@ -178,34 +184,6 @@ class Creature {
     this.anchorRank = 0;
     this.home = null;
     this.arrived = false;
-  }
-
-  // 정박 리더 이동(10초 귀소 → 도착 후 위치 고정 + 자전)
-  _updateAnchoredMotion() {
-    if (this.anchorRank === 0 || !this.home) return;
-
-    if (!this.arrived) {
-      const now = millis();
-      const tRaw = (now - this.homeStartMs) / this.homeDurationMs;
-      const t = constrain(tRaw, 0, 1);
-      const ease = (u) => u * u * (3 - 2 * u);
-
-      const target = p5.Vector.lerp(this.homeStartPos, this.home, ease(t));
-      let desired = p5.Vector.sub(target, this.position);
-      const d = desired.mag();
-      // 정박 귀소는 노이즈 이동 대신 "seek"로 처리
-      desired.setMag(map(d, 0, width, this.initMaxSpeed * 0.2, this.initMaxSpeed));
-      this.position.add(desired);
-
-      if (p5.Vector.dist(this.position, this.home) <= this.arriveRadius && t >= 0.999) {
-        this.arrived = true;
-        this.position.set(this.home);
-      }
-    } else {
-      // 도착: 위치 고정 + 자전각 업데이트 (서브클래스가 원하면 spinAngle 사용)
-      this.position.set(this.home);
-      this.spinAngle += this.spinSpeed;
-    }
   }
 
   // ★ 현재 표시용 스케일
@@ -231,15 +209,19 @@ class Creature {
 
   // ★ 손이 ‘연속 접촉 시간(3초)’ 카운트.
   checkPetting() {
-    if (this.isSpawning) return;      // 등장 중엔 먹이를 못 먹게
-    // 경과 시간 계산
+    if (this.isSpawning) return;      // 등장 중엔 못 쓰다듬게
+
     const now = millis();
     const dt = now - this._lastUpdateMs;
     this._lastUpdateMs = now;
 
-    // 손 반경: 시각적으로 비슷하게 유지하려면 rHand/zoom 사용 권장
+    // ── 진화 쿨다운 해제 체크 ─────────────────────
+    if (this._evoCooling && now >= this._evoCooldownEnd) {
+      this._evoCooling = false;
+    }
+
+    // 손 반경
     const handR = (typeof rHand === 'number' ? rHand * 0.5 : 25);
-    // const handR = (typeof rHand === 'number' ? (rHand * 0.5) / zoom : 25/zoom);
 
     // 월드 좌표계 손 포인트 배열 사용
     let insideAny = false;
@@ -256,71 +238,80 @@ class Creature {
       insideAny = false;
     }
 
-    // 현재 접촉 상태 저장
     this.touching = insideAny;
 
-    // ✅ 각 생명체가 자신의 blink 로직을 수행
+    // 각 생명체 개별 blink 로직
     if (typeof this.blink === 'function') {
       this.blink(this.touching);
     }
 
     if (this.touching) {
-      // this.currentColor = color('pink');     // 터치 확인용
-      // 연속 접촉 시간 누적 (쿨다운이 아닐 때만)
+      // 연속 접촉 시간 누적
       this.touchHoldMs += dt;
 
-      // 3초 이상 연속으로 닿아있을 때 1회 트리거
+      // 3초 이상 연속으로 닿았을 때
       if (this.touchHoldMs >= this.touchThresholdMs) {
         // 버프(커짐) 발동
         this.activateBuff(3000);
-        // 스테이지1 카운팅용: 한 번이라도 3초 달성
         this.everTouched3s = true;
 
-        // ★ 진화 처리: 단계 +1 (최대치 제한)
-        if (typeof stage !== 'undefined' && stage === 2) {
+        // ─────────────────────────────────────
+        // 1) 진화: stage 2, 3 모두에서 가능
+        // ─────────────────────────────────────
+        const canEvolveStage =
+          (typeof stage !== 'undefined') &&
+          (stage === 2 || stage === 3);
+
+        if (canEvolveStage && !this._evoCooling) {
           const prevStep = this.evolutionStep;
           const nextStep = min(this.evolutionStep + 1, this.maxEvolutionStep);
 
           if (nextStep !== prevStep) {
             this.evolutionStep = nextStep;
 
-            // (옵션) 1→2 변할 때 색 한번만 바꾸기
+            // 1 → 2로 넘어갈 때 최초 색 입히기
             if (prevStep === 1 && !this.isColored) {
-              // genes[1]이 팔레트 객체라면 .c1 같은 색을 선택.  팔레트의 첫 번째 색상 가져옴
-              const baseCol = this.dna?.genes?.[1]?.c1 || this.dna?.genes?.[1] || this.baseC1;
-              this.baseC1 = color(baseCol);    // baseCol 값을 실제 색상 객체로 변환
+              const baseCol = this.dna?.genes?.[1]?.c1
+                || this.dna?.genes?.[1]
+                || this.baseC1;
+              this.baseC1 = color(baseCol);
               this.isColored = true;
             }
 
-            // (옵션) DNA에도 저장하고 싶다면
+            // DNA에도 단계 저장
             if (this.dna?.genes) this.dna.genes[2] = this.evolutionStep;
 
-            // 서브클래스 훅 호출 (예: Caterpillar가 더듬이/털/줄무늬/발 표시 전환)
+            // 서브클래스 훅 호출 (더듬이/털/줄무늬/발 등)
             if (typeof this.onEvolve === 'function') {
               this.onEvolve(this.evolutionStep);
             }
           }
         }
 
-        // 스테이지 3에서 '색이 입혀진' 개체만 후광 획득
-        if (stage === 3 && this.isColored) {
+        // ─────────────────────────────────────
+        // 2) 후광: stage 3 + 진화 단계 3단계 이상
+        // ─────────────────────────────────────
+        const fullyEvolved = (this.evolutionStep >= 3);
+
+        if (typeof stage !== 'undefined' && stage === 3 && fullyEvolved) {
           const was = this.isHalo;
           this.isHalo = true;
-          // 방금 켜졌고 타이머가 없으면 시작
           if (!was && this._lastLevelUpMs == null) {
-            this._lastLevelUpMs = millis();
+            this._lastLevelUpMs = millis(); // 레벨업 타이머 시작
           }
         }
 
-        // ★ 쿨다운 시작: 5초간 추가 진화 봉인
+        // ─────────────────────────────────────
+        // 3) 진화 쿨다운 시작 (5초간 추가 진화 봉인)
+        // ─────────────────────────────────────
         this._evoCooling = true;
         this._evoCooldownEnd = now + this.evoCooldownMs;
 
-        // 다음 단계도 ‘쿨다운 해제 후 새 3초’가 필요하도록 타이머 리셋
+        // 다음 3초를 새로 세기 위해 리셋
         this.touchHoldMs = 0;
       }
     } else {
-      // 접촉이 끊어지면 세션 리셋 (쿨다운 여부와 무관)
+      // 손이 떨어지면 카운트 리셋
       this.touchHoldMs = 0;
     }
   }
@@ -374,7 +365,15 @@ class Creature {
 
     // 0) 스테이지/후광/체력 조건 확인
     const inStage3 = (typeof stage !== 'undefined' && stage === 3);
-    if (!this.isHalo || !inStage3) return;
+    // ❗ stage 4 이상이거나, 후광이 없으면
+    //    진행 중이던 힐도 즉시 중단하고 바로 return
+    if (!this.isHalo || !inStage3) {
+      if (this._healTarget) {
+        this._endHeal(true); // 강제 종료
+      }
+      return;
+    }
+
 
     // donor는 최소 1/3 이상 남아 있어야 함
     const donorFloor = this.initHealth / 3;
@@ -426,19 +425,33 @@ class Creature {
     }
 
     // 2) 힐 미진행: 대상 탐색 (한 번에 한 명만)
-    //   - 가장 가까운 개체 중 체력 반 이하 + 아직 다른 이에게서 받는 중이 아님
+    //   - healRange 안에 있는 애들 중에서
+    //   - 체력 비율(health / initHealth)이 가장 낮은 애를 우선
     let best = null;
+    let bestHealthRatio = Infinity;  // 낮을수록 "더 아픈" 상태
     let bestDist = Infinity;
+
     for (const o of all) {
       if (o === this) continue;
       if (o.dead()) continue;
-      if (o.isHalo) continue;                // ★ 후광 보유자는 스킵
-      if (o.health >= o.initHealth * 0.5) continue; // 절반 이하만
-      if (o._healingFrom && o._healingFrom !== this) continue; // 이미 다른 이에게 받는 중
+      if (o.isHalo) continue;                           // 후광 보유자는 힐 대상 X
+      if (o._healingFrom && o._healingFrom !== this) continue; // 이미 다른 애에게서 받는 중
 
       const d = this._distTo(o);
-      if (d <= this.healRange && d < bestDist) {
-        best = o; bestDist = d;
+      if (d > this.healRange) continue;                 // "가까운 애들"만 후보
+
+      // 현재 체력 비율 (0에 가까울수록 더 아픔)
+      const healthRatio = o.health / o.initHealth;
+
+      // ① healthRatio가 더 낮은 애를 우선
+      // ② healthRatio가 거의 같다면, 더 가까운 애를 우선
+      if (
+        healthRatio < bestHealthRatio ||
+        (abs(healthRatio - bestHealthRatio) < 0.01 && d < bestDist)
+      ) {
+        best = o;
+        bestHealthRatio = healthRatio;
+        bestDist = d;
       }
     }
 
@@ -460,6 +473,7 @@ class Creature {
     this._healEndMs = now + this.healDurationMs;
     this._healLastMs = now;
     target._healingFrom = this; // 수혜자 플래그(동시 주입 방지)
+    this._lastHealTarget = target;   // ★ 마지막 타겟 기록
   }
 
   // 힐 종료(정리)
@@ -470,74 +484,124 @@ class Creature {
     this._healTarget = null;
     this._healStartMs = 0;
     this._healEndMs = 0;
-    // 필요시 쿨다운 등을 여기서 넣어도 됨
+
+    this._lastHealEndMs = millis();  // ★ 끝난 시각 기록
   }
 
   // 후광 보유 시 시간에 따라 레벨 상승 (초당 0.06 → 약 67초에 레벨4 도달)
   // 원하는 속도로 HALO_RATE 조정 가능
-  updateHaloProgress() {
+  // 정박 리더 이동(20초 귀소 → 도착 후 위치 고정 + 자전)
+  _updateAnchoredMotion() {
+    if (this.anchorRank === 0 || !this.home) return;
+
     const now = millis();
-    const dt = (now - this._lastHaloTick) / 1000; // sec
-    this._lastHaloTick = now;
+    const isStage4Leader =
+      this.isLeader &&
+      typeof stage !== 'undefined' &&
+      stage === 4 &&
+      flowfield?.lookup;
 
-    if (this.isHalo) {
-      const HALO_RATE = 0.06;
-      this.haloLevel += HALO_RATE * dt;
-      if (!this.isLeader && this.haloLevel >= 4) {
-        // 이 시점에서 "리더"로 승격(정박은 World에서 결정)
-        this.isLeader = true;
-        if (this.leaderSince === 0) this.leaderSince = now;
-        // 살짝 시각적 보상(원하면 크기/버프 등)
-        this.buffActive = true;
-        this.buffEndMs = now + 800;
+    if (!this.arrived) {
+      const tRaw = (now - this.homeStartMs) / this.homeDurationMs;
+      const t = constrain(tRaw, 0, 1);
+      const ease = (u) => u * u * (3 - 2 * u);
+
+      // 20초 동안 homeStartPos → home 으로 진행하는 "이상적인 경로"
+      const baseTarget = p5.Vector.lerp(this.homeStartPos, this.home, ease(t));
+      let pos = this.position.copy();
+
+      if (isStage4Leader) {
+        // 🔄 1) 흐름장 벡터(소용돌이 방향)를 더 강하게 탄다
+        const flowDir = flowfield.lookup(pos); // 단위벡터
+
+        // t=0일 때 가장 세게, t→1 로 갈수록 조금 약해짐
+        const orbitStrength = map(t, 0, 1, 60, 15); // px/frame 정도 (필요하면 수치 조절)
+        const orbitStep = flowDir.mult(orbitStrength);
+
+        pos.add(orbitStep);
+
+        // 🔁 2) 완전히 떠내려가지 않도록, baseTarget 쪽으로 서서히 끌어당김
+        //     t가 커질수록(시간이 지날수록) 끌어당기는 비율도 조금씩 커지게
+        const pullFactor = lerp(0.15, 0.35, t); // 0.2 ~ 0.45 정도로 서서히 증가
+        pos = p5.Vector.lerp(pos, baseTarget, pullFactor);
+      } else {
+        // 기존 anchor seek 로직 (stage4가 아니거나 리더가 아닌 경우)
+        let desired = p5.Vector.sub(baseTarget, pos);
+        const d = desired.mag();
+        desired.setMag(map(d, 0, width, this.initMaxSpeed * 0.2, this.initMaxSpeed));
+        pos.add(desired);
       }
+
+      this.position.set(pos);
+
+      // ⏱ homeDurationMs(=20000ms) 끝나면 무조건 중심에 도달하도록 스냅
+      if (t >= 1) {
+        this.arrived = true;
+        this.position.set(this.home);
+      }
+    } else {
+      // 도착 후에는 중심에 붙어서 자전
+      this.position.set(this.home);
+      this.spinAngle += this.spinSpeed;
     }
-  }
-
-  // 정박 리더로 지정(1~3순위)
-  anchorTo(center, rank) {
-    this.anchorRank = rank;          // 1,2,3
-    this.home = createVector(center.x, center.y);
-    this.homeStartPos = this.position.copy();
-    this.homeStartMs = millis();
-    this.arrived = false;
-  }
-
-  // 정박 해제(여전히 리더일 순 있으나 중심 배정 X)
-  unanchor() {
-    this.anchorRank = 0;
-    this.home = null;
-    this.arrived = false;
   }
 
   // 정박 리더 이동(10초 귀소 → 도착 후 위치 고정 + 자전)
   _updateAnchoredMotion() {
     if (this.anchorRank === 0 || !this.home) return;
 
+    const now = millis();
+    const isStage4Leader =
+      this.isLeader &&
+      typeof stage !== 'undefined' &&
+      stage === 4 &&
+      flowfield?.lookup;
+
     if (!this.arrived) {
-      const now = millis();
       const tRaw = (now - this.homeStartMs) / this.homeDurationMs;
       const t = constrain(tRaw, 0, 1);
       const ease = (u) => u * u * (3 - 2 * u);
 
-      const target = p5.Vector.lerp(this.homeStartPos, this.home, ease(t));
-      let desired = p5.Vector.sub(target, this.position);
-      const d = desired.mag();
-      // 정박 귀소는 노이즈 이동 대신 "seek"로 처리
-      desired.setMag(map(d, 0, width, this.initMaxSpeed * 0.2, this.initMaxSpeed));
-      this.position.add(desired);
+      // 10초 동안 선형(이징)으로 homeStartPos → home 으로 이동
+      const baseTarget = p5.Vector.lerp(this.homeStartPos, this.home, ease(t));
+      let pos = this.position.copy();
 
-      if (p5.Vector.dist(this.position, this.home) <= this.arriveRadius && t >= 0.999) {
+      if (isStage4Leader) {
+        // 🔄 흐름장 벡터(소용돌이 방향)
+        const swirlDir = flowfield.lookup(pos);
+
+        // 소용돌이 강도 (필요하면 숫자 조절)
+        const swirlStrength = 20; // px 정도
+        const swirl = swirlDir.mult(swirlStrength * (1 - t));
+        // → 중심에 가까울수록 소용돌이 약해지게 (1 - t)
+
+        // ① 흐름장을 타면서 한 번 이동
+        pos.add(swirl);
+
+        // ② 전체적으로는 baseTarget 으로 10초 안에 정확히 수렴하도록 보정
+        //    (스냅이 아니라 부드럽게 끌려가게)
+        pos = p5.Vector.lerp(pos, baseTarget, 0.35);
+      } else {
+        // 기존 anchor seek 로직 (stage4가 아니거나 리더가 아닌 경우)
+        let desired = p5.Vector.sub(baseTarget, pos);
+        const d = desired.mag();
+        desired.setMag(map(d, 0, width, this.initMaxSpeed * 0.2, this.initMaxSpeed));
+        pos.add(desired);
+      }
+
+      this.position.set(pos);
+
+      // ⏱ homeDurationMs(=10초)가 끝나면 무조건 중심에 도달하도록 스냅
+      if (t >= 1) {
         this.arrived = true;
         this.position.set(this.home);
       }
     } else {
-      // 도착: 위치 고정 + 자전각 업데이트 (서브클래스가 원하면 spinAngle 사용)
+      // 도착 후에는 중심에 붙어서 자전
       this.position.set(this.home);
       this.spinAngle += this.spinSpeed;
     }
   }
-
   // A creature can find food and eat it
   eat(food) {
     // Check all the food vectors
@@ -578,11 +642,19 @@ class Creature {
 
   // 물리 업데이트 함수
   update() {
+    const isStage4Leader =
+      this.isLeader && typeof stage !== 'undefined' && stage === 4;
+
     // 정박 리더면 별도 이동 로직
     if (this.anchorRank > 0 && this.home) {
       this._updateAnchoredMotion();
-      // 정박 중엔 체력 소모만 약하게 진행(원한다면)
-      this.health -= 0.05;
+
+      // ✅ stage 4 리더는 체력이 줄지 않도록 고정
+      if (isStage4Leader) {
+        this.health = this.initHealth;
+      } else {
+        this.health -= 0.05;
+      }
       return;
     }
 
@@ -620,9 +692,14 @@ class Creature {
         this.health = this.initHealth;       // 스폰 종료 시 정확히 정착
       }
     } else {
-      this.health -= 0.1;       // 체력이 점점 줄어듦
-      if (this.health < this.initHealth * 0.2) {  // 체력이 20%로 줄어들면
-        this.maxspeed = 0.1;      // 느려짐
+      if (isStage4Leader) {
+        // ✅ stage 4 리더는 항상 풀피 유지
+        this.health = this.initHealth;
+      } else {
+        this.health -= 0.1;       // 체력이 점점 줄어듦
+        if (this.health < this.initHealth * 0.2) {  // 체력이 20%로 줄어들면
+          this.maxspeed = 0.1;      // 느려짐
+        }
       }
     }
   }
@@ -714,6 +791,10 @@ class Creature {
 
   // 죽음
   dead() {
+    // ✅ stage 4 리더는 절대 죽지 않음
+    if (this.isLeader && typeof stage !== 'undefined' && stage === 4) {
+      return false;
+    }
     return this.health < 0.0;
   }
 
