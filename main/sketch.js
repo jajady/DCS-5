@@ -14,6 +14,7 @@
 
 //---- 생태계 ----//
 let stage;
+let stage4StartMs = null;
 let world;
 let foodSpawnRate;  // 먹이 생길 확률
 let populationSize;  // 인구수
@@ -62,45 +63,7 @@ function setup() {
 
   margin = 200;           // 화면 마진 
 
-  stage = 1;        // 스테이지 1로 초기화
-  populationSize = 500;       // 인구수
-  // reproduceRate = 0.0005;        // 번식 확률 실험
-  reproduceRate = 0.00005;        // 번식 확률
-  mutateRate = 0.01          // 돌연변이 확률
-  foodSpawnRate = 0.01;     // 먹이가 생길 확률
-
-  world = new World(populationSize);
-
-  backgroundColor = color('#030303');
-  rHand = 50;  // 손 크기
-
-  // Create particle emitters for each hand keypoint
-  for (let i = 0; i < MAX_HANDS; i++) {
-    emitters.push(new Emitter(width / 2, height / 2));
-  }
-
-  zoomCenter = { x: width / 2, y: height / 2 };
-  lastZoomCenter = { x: width / 2, y: height / 2 };
-  textFont('system-ui, -apple-system, Segoe UI, Roboto, sans-serif');
-  noCursor();   // 커서 숨김
-
-  // ── 흐름장 초기화(센터 3개: 큰/중/작)
-  flowfield = new FlowField(
-    20,
-    [
-      { x: width * 0.30, y: height * 0.35, strength: 2.0, radius: 200, rot: -HALF_PI }, // 큰
-      { x: width * 0.80, y: height * 0.50, strength: 1.0, radius: 100, rot: HALF_PI }, // 중
-      { x: width * 0.40, y: height * 0.80, strength: 0.9, radius: 150, rot: -HALF_PI }, // 작은
-    ]
-  );
-
-  backgroundColor = color('#1b1b1bff');
-
-  // stage4 배경 보간 초기값 설정
-  bgFrom = color(STAGE4_PALETTE[0]);
-  bgTo = color(STAGE4_PALETTE[1]);
-  bgIdx = 1;
-  bgT = 0;
+  resetSketchState();
 }
 
 
@@ -111,6 +74,9 @@ function draw() {
   scale(-1, 1);
 
   if (stage === 4) {
+    if (stage4StartMs === null) {
+      stage4StartMs = millis();
+    }
     // smoothstep 이징으로 bgFrom→bgTo 보간
     const u = bgT;
     const t = u * u * (3 - 2 * u); // smoothstep
@@ -124,8 +90,15 @@ function draw() {
       bgFrom = bgTo;
       bgTo = _pickNextStage4Color(); // 다음 색으로 계속 루프
     }
+
+    // 🔹 2분(120000ms) 지나면 리셋
+    if (millis() - stage4StartMs >= 120000) {
+      resetSketchState();   // ↓ 아래에서 정의할 함수
+      // draw() 나머지 로직은 초기화된 상태로 계속 진행
+    }
   } else {
     background(backgroundColor);
+    stage4StartMs = null;
   }
 
   updateZoomState();
@@ -179,13 +152,6 @@ function draw() {
 
 // --- 스테이지 전환 ---
 function keyPressed() {
-  // 1) 스페이스: stage===4 일 때만 흐름장 디버그 토글
-  // if (key === ' ' || keyCode === 32) {
-  //   debug = !debug;
-  //   console.log('flowfield debug:', debug);
-  //   return; // 스페이스 처리는 여기서 끝
-  // }
-
   // 2) 스테이지 전환
   if (key === '1') {
     stage = 1;
@@ -212,9 +178,15 @@ function keyPressed() {
   if (key === 's' || key === 'S') {  // 소문자 s, 대문자 S 둘 다 인식
     saveCanvas('screenshot.png');  // 파일명 screenshot.png로 저장
   }
+
+  if (key === 'r' || key === 'R') {
+    resetSketchState();
+  }
 }
 
 function _pickNextStage4Color() {
   bgIdx = (bgIdx + 1) % STAGE4_PALETTE.length;
   return color(STAGE4_PALETTE[bgIdx]);
 }
+
+
