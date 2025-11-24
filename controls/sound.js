@@ -21,7 +21,7 @@ function fadeIn(snd, target = 0.8, sec = 0.8) {
 }
 
 // 예: 1스테이지는 조용, 3스테이지는 좀 더 큼
-const stageVolumes = { 1: 0.5, 2: 0.5, 3: 0.35, 4: 0.35 };
+const stageVolumes = { 1: 0.5, 2: 0.5, 3: 0.35, 4: 0.3 };
 
 function playStageMusic(stageNum) {
   const next = tracks[stageNum];
@@ -31,13 +31,13 @@ function playStageMusic(stageNum) {
   const vol = stageVolumes[stageNum] ?? 0.8;
 
   // 이전 곡 부드럽게 종료
-  if (currentTrack) fadeOutAndStop(currentTrack, 0.6);
+  if (currentTrack) fadeOutAndStop(currentTrack, 2.0);
 
   // 새 곡 재생
   next.stop(); // 혹시 이전 루프가 남아있을 수도 있으니 정리
   next.play();
   next.setVolume(0);
-  next.setVolume(vol, 0.8);
+  next.setVolume(vol, 5.0);
   currentTrack = next;
 
   // ✅ 곡이 끝나면 자동으로 다시 재생 (루프처럼 동작)
