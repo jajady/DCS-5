@@ -32,8 +32,8 @@ function preload() {       // ml5 handpose 준비
   // evolveSfx = loadSound('../assets/221683__timbre__another-magic-wand-spell-tinkle.flac', () => {
   //   evolveSfx.setVolume(0.3);   // ★ 0.0 ~ 1.0 사이, 원하는 값으로
   // });
-  evolveSfx = loadSound('../assets/magic-sparkle.mp3', () => {
-    evolveSfx.setVolume(0.2);   // ★ 0.0 ~ 1.0 사이, 원하는 값으로
+  evolveSfx = loadSound('../assets/silver-chime.mp3', () => {
+    evolveSfx.setVolume(0.5);   // ★ 0.0 ~ 1.0 사이, 원하는 값으로
   });
 }
 
