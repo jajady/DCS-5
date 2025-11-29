@@ -220,14 +220,13 @@ class Creature {
       this._evoCooling = false;
     }
 
-    // 손 반경
-    const handR = (typeof rHand === 'number' ? rHand * 0.5 : 45);
+    // [1] 손 반경을 좀 더 크게 + rHand 줄이지 않기
+    const handR = (typeof rHand === 'number' ? rHand : 45);
 
-    // zoom 1.0  → touchScale = 1 (그대로)
-    // zoom 2.0  → touchScale = 0.5 (더 가까워야 닿음)
-    // zoom 0.5  → touchScale = 2 (멀리서도 닿은 걸로)
+    // [2] 줌에 따라 너무 심하게 줄어들지 않게 완화
     const z = (typeof zoom === 'number' && zoom > 0) ? zoom : 1;
-    const touchScale = 1 / z;
+    // 기존: const touchScale = 1 / z;
+    const touchScale = 1 / Math.sqrt(z); // zoom 2배 → 반경 약 0.7배 정도로만 줄어듦
 
     // 월드 좌표계 손 포인트 배열 사용
     let insideAny = false;
@@ -235,14 +234,19 @@ class Creature {
     if (Array.isArray(handPointsWorld) && handPointsWorld.length > 0) {
       for (const hp of handPointsWorld) {
         const d = dist(this.position.x, this.position.y, hp.x, hp.y);
-        if (d < (this.r + handR) * touchScale) {   // ← 여기
+
+        // [3] 살짝 여유를 더 주고 싶으면 *1.2 같은 계수 추가
+        const touchRadius = (this.r + handR) * touchScale * 1.2;
+
+        if (d < touchRadius) {
           insideAny = true;
           break;
         }
       }
     } else if (typeof handPosition !== 'undefined' && handPosition) {
       const d = dist(this.position.x, this.position.y, handPosition.x, handPosition.y);
-      insideAny = (d < (this.r + handR) * touchScale);       // ← 여기
+      const touchRadius = (this.r + handR) * touchScale * 1.2;
+      insideAny = (d < touchRadius);
     } else {
       insideAny = false;
     }
